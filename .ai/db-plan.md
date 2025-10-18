@@ -43,10 +43,10 @@ CREATE TABLE flashcards_ai_generation (
   id SERIAL PRIMARY KEY,
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   request_time TIMESTAMPTZ NOT NULL,
-  response_time TIMESTAMPTZ NOT NULL,
-  token_count INTEGER NOT NULL,
-  generated_flashcards_count INTEGER NOT NULL,
-  model VARCHAR(36) NOT NULL
+  response_time TIMESTAMPTZ,
+  token_count INTEGER,
+  generated_flashcards_count INTEGER,
+  model VARCHAR(36)
 );
 
 CREATE TABLE flashcards (
@@ -78,8 +78,8 @@ CREATE TABLE ai_logs (
   id SERIAL PRIMARY KEY,
   flashcards_generation_id INTEGER UNIQUE NOT NULL REFERENCES flashcards_ai_generation(id) ON DELETE CASCADE,
   request_time TIMESTAMPTZ NOT NULL,
-  response_time TIMESTAMPTZ NOT NULL,
-  token_count INTEGER NOT NULL,
+  response_time TIMESTAMPTZ,
+  token_count INTEGER,
   input_length INTEGER NOT NULL CHECK(input_length BETWEEN 1000 and 10000),
   input_text_hash TEXT NOT NULL,
   error_info TEXT,

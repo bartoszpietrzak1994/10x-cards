@@ -53,10 +53,7 @@ export interface AuthResponseDTO {
  * Derived from the 'flashcards' table Insert type.
  * Only includes properties that can be set by the user.
  */
-export type CreateManualFlashcardCommand = Pick<
-  ManualFlashcardInsert,
-  "front" | "back"
-> & {
+export type CreateManualFlashcardCommand = Pick<ManualFlashcardInsert, "front" | "back"> & {
   flashcard_type: "manual"; // Fixed to "manual" for manual flashcards
 };
 
@@ -72,10 +69,7 @@ export type FlashcardDTO = Pick<
  * Command Model for updating an existing flashcard.
  * Only allows modification of 'front' and 'back'.
  */
-export type UpdateFlashcardCommand = Pick<
-  FlashcardUpdate,
-  "front" | "back"
->;
+export type UpdateFlashcardCommand = Pick<FlashcardUpdate, "front" | "back">;
 
 /**
  * DTO for flashcard deletion response.
@@ -107,10 +101,7 @@ export interface AIGenerationResponseDTO {
  * DTO representing the AI log entries.
  * Derived from the 'ai_logs' table Row with selected fields.
  */
-export type AILogDTO = Pick<
-  AILog,
-  "request_time" | "response_time" | "token_count" | "error_info"
->;
+export type AILogDTO = Pick<AILog, "request_time" | "response_time" | "token_count" | "error_info">;
 
 /**
  * DTO representing a flashcard proposal.

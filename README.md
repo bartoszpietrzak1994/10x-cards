@@ -69,8 +69,56 @@
 - **Spaced Repetition Integration:**
   - Generated and manually created flashcards can be integrated with an existing spaced repetition algorithm to optimize learning retention.
 
+## API Endpoints
+
+### POST `/api/flashcards/ai-generation`
+**Status:** ✅ Implemented (Phase 1)
+
+Initiates AI-powered flashcard generation from user-provided text.
+
+**Request:**
+```json
+{
+  "input_text": "Text between 1000-10000 characters"
+}
+```
+
+**Response (202 Accepted):**
+```json
+{
+  "message": "AI generation initiated",
+  "generation_id": 123,
+  "status": "processing"
+}
+```
+
+For detailed API documentation, testing examples, and setup instructions, see:
+- **API Documentation:** `.ai/api-endpoint-documentation.md`
+- **Setup Guide:** `.ai/development-setup.md`
+- **Test Examples:** `.ai/api-test-examples.http`
+- **Implementation Summary:** `.ai/implementation-summary.md`
+
 ## Project Status
-The project is currently in active development, with key features such as AI-based flashcard generation, manual creation, and user management implemented. Further refinements and feature enhancements are underway.
+
+### ✅ Completed (Phase 1)
+- API endpoint for initiating AI flashcard generation
+- Database schema with Supabase integration
+- Input validation and error handling
+- Asynchronous processing foundation
+- Comprehensive documentation
+
+### 🚧 In Progress
+- AI Integration with OpenRouter/OpenAI
+- Queue system for background processing
+- Status polling endpoint
+- Flashcard proposals management
+
+### 📋 Planned
+- User authentication with JWT
+- Rate limiting and security enhancements
+- Frontend UI for flashcard generation
+- Spaced repetition algorithm integration
+- Production deployment
 
 ## License
 This project is licensed under the [MIT License](LICENSE).

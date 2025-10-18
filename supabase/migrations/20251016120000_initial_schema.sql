@@ -76,10 +76,10 @@ create table flashcards_ai_generation (
   id serial primary key,
   user_id uuid not null references users(id) on delete cascade,
   request_time timestamptz not null,
-  response_time timestamptz not null,
-  token_count integer not null,
-  generated_flashcards_count integer not null,
-  model varchar(36) not null
+  response_time timestamptz,
+  token_count integer,
+  generated_flashcards_count integer,
+  model varchar(36)
 );
 
 alter table flashcards_ai_generation enable row level security;
@@ -133,8 +133,8 @@ create table ai_logs (
   id serial primary key,
   flashcards_generation_id integer unique not null references flashcards_ai_generation(id) on delete cascade,
   request_time timestamptz not null,
-  response_time timestamptz not null,
-  token_count integer not null,
+  response_time timestamptz,
+  token_count integer,
   input_length integer not null check (input_length between 1000 and 10000),
   input_text_hash text not null,
   error_info text,
