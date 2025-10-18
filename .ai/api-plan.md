@@ -290,7 +290,7 @@
   - AI input for flashcard generation must be between 1000 and 10000 characters.
   - Flashcard “front” text must not exceed 200 characters; “back” text must not exceed 500 characters.
   - Email in user registration is validated for uniqueness.
-  - Valid enum values must be provided for `flashcard_type` (allowed values: "AI-generated", "AI-edited", "manual").
+  - Valid enum values must be provided for `flashcard_type` (allowed values: "AI-generated", "AI-edited", "AI-proposal", "manual").
 - **Business Logic Implementation**:
   - For AI-based generation, the API validates the input, initiates an asynchronous task for AI processing, logs key metrics (request time, response time, token count, error messages) in the `flashcards_ai_generation` and `ai_logs` tables, and upon completion, creates flashcard records with type "AI-generated".
   - For manual flashcards, the API directly creates flashcard records using the payload provided.

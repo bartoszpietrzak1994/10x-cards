@@ -2,7 +2,7 @@
 
 ## Enum
 ```sql
-CREATE TYPE card_type AS ENUM ('AI-generated', 'AI-edited', 'manual');
+CREATE TYPE card_type AS ENUM ('AI-generated', 'AI-edited', 'AI-proposal' 'manual');
 ```
 
 ## Tabele

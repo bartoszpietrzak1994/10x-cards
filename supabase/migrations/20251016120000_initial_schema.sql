@@ -18,6 +18,7 @@
 create type card_type as enum (
   'ai-generated',
   'ai-edited',
+  'ai-proposal',
   'manual'
 );
 

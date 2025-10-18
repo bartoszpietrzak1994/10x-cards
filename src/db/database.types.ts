@@ -213,7 +213,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      card_type: "ai-generated" | "ai-edited" | "manual"
+      card_type: "ai-generated" | "ai-edited" | "ai-proposal" | "manual"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -344,7 +344,7 @@ export const Constants = {
   },
   public: {
     Enums: {
-      card_type: ["ai-generated", "ai-edited", "manual"],
+      card_type: ["ai-generated", "ai-edited", "ai-proposal", "manual"],
     },
   },
 } as const
