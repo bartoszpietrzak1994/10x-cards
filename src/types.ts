@@ -143,7 +143,7 @@ export interface AcceptFlashcardProposalDTO {
 export interface AIGenerationStatusDTO {
   generation_id: number;
   status: "processing" | "completed" | "failed";
-  flashcardsProposals: FlashcardProposal[];
+  flashcards_proposals: FlashcardProposal[];
   ai_log: AILogDTO;
 }
 

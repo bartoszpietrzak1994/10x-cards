@@ -237,7 +237,7 @@
      {
        "generation_id": 456,
        "status": "completed",  // or "processing", "failed"
-       "flashcardsProposals": [
+       "flashcards_proposals": [
          {
            "id": 789,
            "front": "Generated question text...",
