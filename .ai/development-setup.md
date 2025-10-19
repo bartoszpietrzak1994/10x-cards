@@ -93,7 +93,7 @@ You'll need this UUID for testing the API. It should look like:
 
 3. **The application will be available at:**
    ```
-   http://localhost:4321
+   http://localhost:3000
    ```
 
 ## Testing the AI Generation Endpoint
@@ -107,7 +107,7 @@ You'll need this UUID for testing the API. It should look like:
 ### Using cURL
 
 ```bash
-curl -X POST http://localhost:4321/api/flashcards/ai-generation \
+curl -X POST http://localhost:3000/api/flashcards/ai-generation \
   -H "Content-Type: application/json" \
   -d '{
     "user_id": "your-user-uuid-here",

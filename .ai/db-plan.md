@@ -15,27 +15,8 @@ CREATE TABLE roles (
 );
 ```
 
-### 2. users
-Tabela auth.users jest zarządzana przez Supabase Auth.
-Schema zawierająca dodatkowe informacje o uzytkowniku zawierajaca referencje do auth.users (Supabase Auth)
-```sql
-CREATE TABLE users (
-  id UUID PRIMARY KEY REFERENCES auth.users(id),
-  email TEXT UNIQUE NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
-  role_id INTEGER NOT NULL REFERENCES roles(id) ON DELETE RESTRICT
-);
-
--- Indeks dla email
-CREATE UNIQUE INDEX idx_users_email ON users(email);
-
--- Włączenie RLS (Row Level Security)
-ALTER TABLE users ENABLE ROW LEVEL SECURITY;
-
--- Przykładowa polityka: użytkownik może odczytywać tylko własne dane lub administratorzy
--- CREATE POLICY user_select_policy ON users
---   USING (id = current_setting('app.current_user_id')::INTEGER OR EXISTS (SELECT 1 FROM roles WHERE id = role_id AND name = 'admin'));
-```
+### 2. auth.users
+Ten projekt korzysta z wbudowanej w Supabase tabeli auth.users
 
 ### 3. fiszki
 ```sql

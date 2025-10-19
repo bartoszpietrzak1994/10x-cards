@@ -32,49 +32,10 @@ create table roles (
 alter table roles enable row level security;
 -- policies for roles are to be defined as needed.
 
--- create table users
-create table users (
-  id uuid primary key references auth.users(id),
-  email text unique not null,
-  created_at timestamptz default current_timestamp not null,
-  role_id integer not null references roles(id) on delete restrict
-);
-
-create unique index idx_users_email on users(email);
-
-alter table users enable row level security;
-
-create policy users_select_anon on users
-  for select
-  to anon
-  using (id = current_setting('app.current_user_id')::uuid);
-
-create policy users_select_authenticated on users
-  for select
-  to authenticated
-  using (id = current_setting('app.current_user_id')::uuid or exists (
-    select 1 from roles where id = role_id and name = 'admin'
-  ));
-
-create policy users_insert_policy on users
-  for insert
-  to authenticated
-  with check (id = current_setting('app.current_user_id')::uuid);
-
-create policy users_update_policy on users
-  for update
-  to authenticated
-  using (id = current_setting('app.current_user_id')::uuid);
-
-create policy users_delete_policy on users
-  for delete
-  to authenticated
-  using (exists (select 1 from roles where id = role_id and name = 'admin'));
-
 -- create table flashcards_ai_generation
 create table flashcards_ai_generation (
   id serial primary key,
-  user_id uuid not null references users(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
   request_time timestamptz not null,
   response_time timestamptz,
   token_count integer,
@@ -82,12 +43,12 @@ create table flashcards_ai_generation (
   model varchar(36)
 );
 
-alter table flashcards_ai_generation enable row level security;
+-- alter table flashcards_ai_generation enable row level security;
 
 -- create table flashcards
 create table flashcards (
   id serial primary key,
-  user_id uuid not null references users(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
   ai_generation_id integer unique references flashcards_ai_generation(id),
   front varchar(200) not null,
   back varchar(500) not null,
@@ -109,9 +70,7 @@ create policy flashcards_select_anon on flashcards
 create policy flashcards_select_authenticated on flashcards
   for select
   to authenticated
-  using (user_id = current_setting('app.current_user_id')::uuid or exists (
-    select 1 from users u join roles r on u.role_id = r.id where u.id = user_id and r.name = 'admin'
-  ));
+  using (user_id = current_setting('app.current_user_id')::uuid);
 
 create policy flashcards_insert_policy on flashcards
   for insert
@@ -126,7 +85,7 @@ create policy flashcards_update_policy on flashcards
 create policy flashcards_delete_policy on flashcards
   for delete
   to authenticated
-  using (exists (select 1 from users u join roles r on u.role_id = r.id where u.id = user_id and r.name = 'admin'));
+  using (user_id = current_setting('app.current_user_id')::uuid);
 
 -- create table ai_logs
 create table ai_logs (

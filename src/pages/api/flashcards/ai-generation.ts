@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import { initiateAIGeneration } from "../../../lib/services/aiGenerationService";
 import type { AIGenerationResponseDTO } from "../../../types";
+import { DEFAULT_USER_ID } from "@/db/supabase.client";
 
 // Zod schema for input validation
 const initiateAIGenerationSchema = z.object({
@@ -61,7 +62,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    const { input_text, user_id } = validationResult.data;
+    const { input_text } = validationResult.data;
     const supabase = locals.supabase;
 
     // Step 3: Generate MD5 hash of input text
@@ -73,7 +74,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const { data: generationData, error: generationError } = await supabase
       .from("flashcards_ai_generation")
       .insert({
-        user_id,
+        user_id: DEFAULT_USER_ID,
         request_time: requestTime,
       })
       .select("id")
