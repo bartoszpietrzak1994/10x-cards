@@ -2,22 +2,13 @@ import type { APIRoute } from "astro";
 import { z } from "zod";
 
 import { DEFAULT_USER_ID } from "@/db/supabase.client";
-import {
-  createManualFlashcard,
-  FlashcardServiceError,
-} from "@/lib/services/flashcardService";
+import { createManualFlashcard, FlashcardServiceError } from "@/lib/services/flashcardService";
 import type { CreateManualFlashcardCommand, FlashcardDTO } from "@/types";
 
 // Zod schema for input validation
 const createManualFlashcardSchema = z.object({
-  front: z
-    .string()
-    .min(1, "Front text is required")
-    .max(200, "Front text must not exceed 200 characters"),
-  back: z
-    .string()
-    .min(1, "Back text is required")
-    .max(500, "Back text must not exceed 500 characters"),
+  front: z.string().min(1, "Front text is required").max(200, "Front text must not exceed 200 characters"),
+  back: z.string().min(1, "Back text is required").max(500, "Back text must not exceed 500 characters"),
   flashcard_type: z.literal("manual", {
     errorMap: () => ({ message: "Flashcard type must be 'manual'" }),
   }),
@@ -62,9 +53,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const validationResult = createManualFlashcardSchema.safeParse(body);
 
     if (!validationResult.success) {
-      const errorMessages = validationResult.error.errors.map(
-        (err) => `${err.path.join(".")}: ${err.message}`
-      );
+      const errorMessages = validationResult.error.errors.map((err) => `${err.path.join(".")}: ${err.message}`);
 
       return new Response(
         JSON.stringify({
@@ -87,11 +76,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const userId = DEFAULT_USER_ID;
 
     // Step 4: Create flashcard using service layer
-    const flashcard: FlashcardDTO = await createManualFlashcard(
-      supabase,
-      userId,
-      validatedData
-    );
+    const flashcard: FlashcardDTO = await createManualFlashcard(supabase, userId, validatedData);
 
     // Step 5: Return success response with created flashcard
     return new Response(
@@ -161,4 +146,3 @@ export const POST: APIRoute = async ({ request, locals }) => {
     );
   }
 };
-

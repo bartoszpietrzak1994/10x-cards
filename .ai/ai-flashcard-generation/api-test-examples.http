@@ -3,7 +3,7 @@
 
 ## Variables
 # Replace these with your actual values
-@baseUrl = http://localhost:4321
+@baseUrl = http://localhost:3000
 
 ### 1. Initiate AI Flashcards Generation - Valid Request
 POST {{baseUrl}}/api/flashcards/ai-generation
