@@ -170,15 +170,6 @@ export function useAIGeneration() {
     [fetchGenerationData, clearPolling]
   );
 
-  // Recalculate text length and validation status when inputText changes
-  useEffect(() => {
-    const length = vm.inputText.length;
-    setVm((prev) => ({
-      ...prev,
-      inputLength: length,
-      isValidLength: length >= 1000 && length <= 10000,
-    }));
-  }, [vm.inputText]);
 
   // Clean up on unmount
   useEffect(() => {
@@ -189,9 +180,12 @@ export function useAIGeneration() {
 
   // Set input text
   const setInputText = useCallback((text: string) => {
+    const length = text.length;
     setVm((prev) => ({
       ...prev,
       inputText: text,
+      inputLength: length,
+      isValidLength: length >= 1000 && length <= 10000,
     }));
   }, []);
 
