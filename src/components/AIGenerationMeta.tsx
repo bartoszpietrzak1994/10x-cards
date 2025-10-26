@@ -130,7 +130,7 @@ export function AIGenerationMeta({
                 Generated Flashcards
               </dt>
               <dd className="mt-1 text-sm">
-                {formatNumber(generationMeta.generated_flashcards_count)}
+                {formatNumber(generationMeta?.generated_flashcards_count || null)}
               </dd>
             </div>
           )}
