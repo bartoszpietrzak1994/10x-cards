@@ -186,7 +186,7 @@ export async function updateFlashcard(
   // - "ai-edited" → remains "ai-edited" (no change)
   // - "ai-generated" → changes to "ai-edited"
   // - "ai-proposal" → remains "ai-proposal" (no change)
-  if (existingFlashcard.flashcard_type === "ai-generated") {
+  if (existingFlashcard.flashcard_type === "ai-proposal") {
     updateData.flashcard_type = "ai-edited";
   }
 

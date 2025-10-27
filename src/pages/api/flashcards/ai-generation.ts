@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import { initiateAIGeneration } from "../../../lib/services/aiGenerationService";
 import type { AIGenerationResponseDTO } from "../../../types";
-import { DEFAULT_USER_ID } from "@/db/supabase.client";
+import { DEFAULT_USER_ID, supabaseServiceClient } from "@/db/supabase.client";
 
 // Zod schema for input validation
 const initiateAIGenerationSchema = z.object({
@@ -97,7 +97,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const generationId = generationData.id;
 
     // Step 5: Insert record into ai_logs table
-    const { error: logError } = await supabase.from("ai_logs").insert({
+    // Use service client to bypass RLS for ai_logs
+    const { error: logError } = await supabaseServiceClient.from("ai_logs").insert({
       flashcards_generation_id: generationId,
       request_time: requestTime,
       input_length: inputLength,
@@ -112,7 +113,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
     // Step 6: Trigger asynchronous AI processing
     // Note: This is fire-and-forget - we don't await the result
     // In production, this would queue a background job
-    initiateAIGeneration(supabase, generationId, input_text).catch((error) => {
+    // Use service client to bypass RLS for AI-generated flashcards
+    initiateAIGeneration(supabaseServiceClient, generationId, input_text, DEFAULT_USER_ID).catch((error) => {
       console.error("Failed to initiate AI generation:", error);
       // Error is logged but doesn't affect the response
       // The generation record is already created
