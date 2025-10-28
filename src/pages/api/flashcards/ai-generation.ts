@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import { initiateAIGeneration } from "../../../lib/services/aiGenerationService";
 import type { AIGenerationResponseDTO } from "../../../types";
-import { DEFAULT_USER_ID, supabaseServiceClient } from "@/db/supabase.client";
+import { supabaseServiceClient } from "@/db/supabase.client";
 
 // Zod schema for input validation
 const initiateAIGenerationSchema = z.object({
@@ -12,7 +12,6 @@ const initiateAIGenerationSchema = z.object({
     .string()
     .min(1000, "Input text must be at least 1000 characters")
     .max(10000, "Input text must not exceed 10000 characters"),
-  user_id: z.string().uuid("Valid user UUID is required for development"),
 });
 
 export const prerender = false;
@@ -65,16 +64,32 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const { input_text } = validationResult.data;
     const supabase = locals.supabase;
 
-    // Step 3: Generate MD5 hash of input text
+    // Step 3: Check authentication
+    if (!locals.user) {
+      return new Response(
+        JSON.stringify({
+          error: "Unauthorized",
+          message: "You must be logged in to generate flashcards",
+        }),
+        {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    const userId = locals.user.id;
+
+    // Step 4: Generate MD5 hash of input text
     const inputTextHash = createHash("md5").update(input_text).digest("hex");
     const inputLength = input_text.length;
     const requestTime = new Date().toISOString();
 
-    // Step 4: Insert record into flashcards_ai_generation table
+    // Step 5: Insert record into flashcards_ai_generation table
     const { data: generationData, error: generationError } = await supabase
       .from("flashcards_ai_generation")
       .insert({
-        user_id: DEFAULT_USER_ID,
+        user_id: userId,
         request_time: requestTime,
       })
       .select("id")
@@ -96,7 +111,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     const generationId = generationData.id;
 
-    // Step 5: Insert record into ai_logs table
+    // Step 6: Insert record into ai_logs table
     // Use service client to bypass RLS for ai_logs
     const { error: logError } = await supabaseServiceClient.from("ai_logs").insert({
       flashcards_generation_id: generationId,
@@ -110,17 +125,17 @@ export const POST: APIRoute = async ({ request, locals }) => {
       // Continue despite log error - generation record is created
     }
 
-    // Step 6: Trigger asynchronous AI processing
+    // Step 7: Trigger asynchronous AI processing
     // Note: This is fire-and-forget - we don't await the result
     // In production, this would queue a background job
     // Use service client to bypass RLS for AI-generated flashcards
-    initiateAIGeneration(supabaseServiceClient, generationId, input_text, DEFAULT_USER_ID).catch((error) => {
+    initiateAIGeneration(supabaseServiceClient, generationId, input_text, userId).catch((error) => {
       console.error("Failed to initiate AI generation:", error);
       // Error is logged but doesn't affect the response
       // The generation record is already created
     });
 
-    // Step 7: Return 202 Accepted response
+    // Step 8: Return 202 Accepted response
     const response: AIGenerationResponseDTO = {
       message: "AI generation initiated",
       generation_id: generationId,

@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from "react";
-import { supabaseClient, DEFAULT_USER_ID } from "@/db/supabase.client";
+import { supabaseClient } from "@/db/supabase.client";
 import type {
   AIGenerationResponseDTO,
   FlashcardProposal,
@@ -208,7 +208,6 @@ export function useAIGeneration() {
         },
         body: JSON.stringify({
           input_text: vm.inputText,
-          user_id: DEFAULT_USER_ID,
         }),
       });
 

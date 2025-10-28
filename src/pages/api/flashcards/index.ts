@@ -1,7 +1,6 @@
 import type { APIRoute } from "astro";
 import { z } from "zod";
 
-import { DEFAULT_USER_ID } from "@/db/supabase.client";
 import { createManualFlashcard, FlashcardServiceError } from "@/lib/services/flashcardService";
 import type { CreateManualFlashcardCommand, FlashcardDTO } from "@/types";
 
@@ -27,7 +26,7 @@ export const prerender = false;
  *
  * @returns 201 Created with flashcard data
  * @throws 400 Bad Request if input validation fails
- * @throws 401 Unauthorized if user is not authenticated (future implementation)
+ * @throws 401 Unauthorized if user is not authenticated
  * @throws 500 Internal Server Error for unexpected errors
  */
 export const POST: APIRoute = async ({ request, locals }) => {
@@ -70,10 +69,21 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const validatedData = validationResult.data as CreateManualFlashcardCommand;
     const supabase = locals.supabase;
 
-    // Step 3: Get user ID from context
-    // TODO: Replace DEFAULT_USER_ID with actual authenticated user ID
-    // when authentication middleware is implemented
-    const userId = DEFAULT_USER_ID;
+    // Step 3: Check authentication
+    if (!locals.user) {
+      return new Response(
+        JSON.stringify({
+          error: "Unauthorized",
+          message: "You must be logged in to create flashcards",
+        }),
+        {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    const userId = locals.user.id;
 
     // Step 4: Create flashcard using service layer
     const flashcard: FlashcardDTO = await createManualFlashcard(supabase, userId, validatedData);

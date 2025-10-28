@@ -1,7 +1,6 @@
 import type { APIRoute } from "astro";
 import { z } from "zod";
 
-import { DEFAULT_USER_ID } from "@/db/supabase.client";
 import { updateFlashcard, FlashcardServiceError, deleteFlashcard } from "@/lib/services/flashcardService";
 import type { UpdateFlashcardCommand, FlashcardDTO } from "@/types";
 
@@ -38,7 +37,7 @@ export const prerender = false;
  *
  * @returns 200 OK with updated flashcard data
  * @throws 400 Bad Request if input validation fails
- * @throws 401 Unauthorized if user is not authenticated (future implementation)
+ * @throws 401 Unauthorized if user is not authenticated
  * @throws 404 Not Found if flashcard doesn't exist or doesn't belong to user
  * @throws 500 Internal Server Error for unexpected errors
  */
@@ -113,10 +112,21 @@ export const PUT: APIRoute = async ({ request, params, locals }) => {
     const validatedData = validationResult.data as UpdateFlashcardCommand;
     const supabase = locals.supabase;
 
-    // Step 4: Get user ID from context
-    // TODO: Replace DEFAULT_USER_ID with actual authenticated user ID
-    // when authentication middleware is implemented
-    const userId = DEFAULT_USER_ID;
+    // Step 4: Check authentication
+    if (!locals.user) {
+      return new Response(
+        JSON.stringify({
+          error: "Unauthorized",
+          message: "You must be logged in to update flashcards",
+        }),
+        {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    const userId = locals.user.id;
 
     // Step 5: Call service layer to update flashcard
     const flashcard: FlashcardDTO = await updateFlashcard(supabase, userId, parsedId, validatedData);
@@ -196,7 +206,7 @@ export const PUT: APIRoute = async ({ request, params, locals }) => {
  *
  * @returns 200 OK for deleted flashcard
  * @throws 400 Bad Request if input validation fails
- * @throws 401 Unauthorized if user is not authenticated (future implementation)
+ * @throws 401 Unauthorized if user is not authenticated
  * @throws 404 Not Found if flashcard doesn't exist or doesn't belong to user
  * @throws 500 Internal Server Error for unexpected errors
  */
@@ -207,9 +217,21 @@ export const DELETE: APIRoute = async ({ params, request, locals }) => {
     return new Response(JSON.stringify({ message: 'Invalid flashcard id' }), { status: 400 });
   }
 
-  // TODO: Replace DEFAULT_USER_ID with actual authenticated user ID
-  // when authentication middleware is implemented
-    const userId = DEFAULT_USER_ID;
+  // Check authentication
+  if (!locals.user) {
+    return new Response(
+      JSON.stringify({
+        error: "Unauthorized",
+        message: "You must be logged in to delete flashcards",
+      }),
+      {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+  }
+
+  const userId = locals.user.id;
 
   try {
     // Attempt to delete the flashcard using the flashcard service.

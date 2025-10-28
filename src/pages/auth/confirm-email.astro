@@ -1,0 +1,65 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+
+export const prerender = false;
+
+// Extract token from URL query parameters
+const url = new URL(Astro.request.url);
+const tokenHash = url.searchParams.get("token_hash");
+const type = url.searchParams.get("type");
+
+// Validate parameters
+const hasValidParams = tokenHash && type === "signup";
+
+// TODO: After backend implementation, verify the token with Supabase
+// For now, we just show the UI based on token presence
+const isConfirmed = hasValidParams;
+const error = !hasValidParams ? "The confirmation link is invalid or has expired." : null;
+---
+
+<Layout title="Confirm Email - 10xCards">
+  <div class="container mx-auto py-16 max-w-md">
+    <div class="space-y-6">
+      <div class="space-y-2 text-center">
+        <h1 class="text-3xl font-bold tracking-tight">Email Confirmation</h1>
+      </div>
+
+      <div class="rounded-lg border bg-card p-6 shadow-sm space-y-6">
+        {isConfirmed ? (
+          <>
+            <Alert>
+              <AlertTitle>Success!</AlertTitle>
+              <AlertDescription>
+                Your email address has been confirmed. You can now log in to your account.
+              </AlertDescription>
+            </Alert>
+
+            <div class="flex flex-col gap-4">
+              <Button asChild class="w-full">
+                <a href="/auth/login">Sign In</a>
+              </Button>
+            </div>
+          </>
+        ) : (
+          <>
+            <Alert variant="destructive">
+              <AlertTitle>Confirmation Failed</AlertTitle>
+              <AlertDescription>
+                {error}
+              </AlertDescription>
+            </Alert>
+
+            <div class="flex flex-col gap-4">
+              <Button asChild variant="outline" class="w-full">
+                <a href="/auth/register">Back to Sign Up</a>
+              </Button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  </div>
+</Layout>
+

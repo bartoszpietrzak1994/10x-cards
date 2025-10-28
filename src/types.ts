@@ -46,6 +46,66 @@ export interface AuthResponseDTO {
   token: string;
 }
 
+/**
+ * DTO for login response.
+ */
+export interface LoginResponseDTO {
+  message: string;
+  user: UserDTO;
+}
+
+/**
+ * DTO for logout response.
+ */
+export interface LogoutResponseDTO {
+  message: string;
+}
+
+/**
+ * Command Model for password recovery.
+ */
+export interface RecoverPasswordCommand {
+  email: string;
+  redirectTo: string; // URL to reset password page
+}
+
+/**
+ * Command Model for resetting password.
+ */
+export interface ResetPasswordCommand {
+  token: string;
+  password: string;
+}
+
+/**
+ * DTO for password recovery response.
+ */
+export interface RecoverPasswordResponseDTO {
+  message: string;
+}
+
+/**
+ * DTO for password reset response.
+ */
+export interface ResetPasswordResponseDTO {
+  message: string;
+}
+
+/**
+ * DTO for registration response.
+ */
+export interface RegisterResponseDTO {
+  message: string;
+  user: Pick<UserDTO, "id" | "email">;
+}
+
+/**
+ * DTO for session data.
+ */
+export interface SessionDTO {
+  user: UserDTO | null;
+}
+
 /* ====================== Flashcards DTOs ====================== */
 
 /**

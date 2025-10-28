@@ -1,0 +1,27 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { RegisterForm } from "@/components/auth/RegisterForm";
+
+export const prerender = false;
+
+// TODO: After middleware implementation, add requireGuest(Astro) check
+// For now, we just render the page
+---
+
+<Layout title="Sign Up - 10xCards">
+  <div class="container mx-auto py-16 max-w-md">
+    <div class="space-y-6">
+      <div class="space-y-2 text-center">
+        <h1 class="text-3xl font-bold tracking-tight">Create an account</h1>
+        <p class="text-muted-foreground">
+          Enter your email below to create your account
+        </p>
+      </div>
+
+      <div class="rounded-lg border bg-card p-6 shadow-sm">
+        <RegisterForm client:load />
+      </div>
+    </div>
+  </div>
+</Layout>
+
