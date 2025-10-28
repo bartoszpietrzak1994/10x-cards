@@ -102,6 +102,62 @@ export async function createManualFlashcard(
 }
 
 /**
+ * Deletes a flashcard ensuring that it belongs to the authenticated user.
+ *
+ * @param supabase - Supabase client instance.
+ * @param flashcardId - ID of the flashcard to delete.
+ * @param userId - ID of the authenticated user.
+ * @returns An object with an optional error. If deletion is successful, returns {}.
+ */
+export async function deleteFlashcard(
+  supabase: SupabaseClient,
+  flashcardId: number,
+  userId: string
+): Promise<{ error?: { code: string; message: string } }> {
+  // Validate user authentication.
+  if (!userId) {
+    console.error("deleteFlashcard: Missing user authentication", { flashcardId });
+    return { error: { code: "INVALID_USER", message: "User not authenticated" } };
+  }
+
+  // Verify the flashcard exists and belongs to the user.
+  const { data: existingFlashcard, error: fetchError } = await supabase
+    .from("flashcards")
+    .select("id, user_id")
+    .eq("id", flashcardId)
+    .eq("user_id", userId)
+    .single();
+
+  if (fetchError || !existingFlashcard) {
+    console.error("deleteFlashcard: Flashcard not found or access unauthorized", {
+      flashcardId,
+      userId,
+      fetchError,
+    });
+    return { error: { code: "not_found", message: "Flashcard not found or access unauthorized" } };
+  }
+
+  // Attempt to delete the flashcard.
+  const { error: deleteError } = await supabase
+    .from("flashcards")
+    .delete()
+    .eq("id", flashcardId)
+    .eq("user_id", userId);
+
+  if (deleteError) {
+    console.error("deleteFlashcard: Failed to delete flashcard", {
+      flashcardId,
+      userId,
+      deleteError,
+    });
+    return { error: { code: deleteError.code, message: deleteError.message } };
+  }
+
+  console.info("deleteFlashcard: Flashcard deleted successfully", { flashcardId, userId });
+  return {};
+}
+
+/**
  * Updates an existing flashcard for a user.
  *
  * This function handles the business logic for updating a flashcard,

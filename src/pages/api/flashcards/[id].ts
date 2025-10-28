@@ -2,7 +2,7 @@ import type { APIRoute } from "astro";
 import { z } from "zod";
 
 import { DEFAULT_USER_ID } from "@/db/supabase.client";
-import { updateFlashcard, FlashcardServiceError } from "@/lib/services/flashcardService";
+import { updateFlashcard, FlashcardServiceError, deleteFlashcard } from "@/lib/services/flashcardService";
 import type { UpdateFlashcardCommand, FlashcardDTO } from "@/types";
 
 // Zod schema for update flashcard validation
@@ -188,5 +188,40 @@ export const PUT: APIRoute = async ({ request, params, locals }) => {
         headers: { "Content-Type": "application/json" },
       }
     );
+  }
+};
+
+/**
+ * DELETE endpoint for deleting a flashcard.
+ *
+ * @returns 200 OK for deleted flashcard
+ * @throws 400 Bad Request if input validation fails
+ * @throws 401 Unauthorized if user is not authenticated (future implementation)
+ * @throws 404 Not Found if flashcard doesn't exist or doesn't belong to user
+ * @throws 500 Internal Server Error for unexpected errors
+ */
+export const DELETE: APIRoute = async ({ params, request, locals }) => {
+  // Validate the flashcard ID from the URL parameter.
+  const flashcardId = Number(params.id);
+  if (isNaN(flashcardId)) {
+    return new Response(JSON.stringify({ message: 'Invalid flashcard id' }), { status: 400 });
+  }
+
+  // TODO: Replace DEFAULT_USER_ID with actual authenticated user ID
+  // when authentication middleware is implemented
+    const userId = DEFAULT_USER_ID;
+
+  try {
+    // Attempt to delete the flashcard using the flashcard service.
+    const result = await deleteFlashcard(locals.supabase, flashcardId, userId);
+    if (result.error) {
+      if (result.error.code === 'not_found') {
+        return new Response(JSON.stringify({ message: 'Flashcard not found or access unauthorized' }), { status: 404 });
+      }
+      return new Response(JSON.stringify({ message: result.error.message }), { status: 500 });
+    }
+    return new Response(JSON.stringify({ message: 'Flashcard deleted successfully' }), { status: 200 });
+  } catch (error) {
+    return new Response(JSON.stringify({ message: 'Failed to delete flashcard' }), { status: 500 });
   }
 };
