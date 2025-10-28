@@ -42,29 +42,37 @@ Użytkownicy napotykają problem związany z czasochłonnością ręcznego tworz
 
 ## 5. Historyjki użytkowników
 
-### US-001: Rejestracja i logowanie użytkownika
-- ID: US-001
-- Tytuł: Rejestracja i logowanie
-- Opis: Użytkownik musi mieć możliwość założenia konta i zalogowania się do systemu.
+### US-001a: Rejestracja użytkownika
+- ID: US-001a
+- Tytuł: Rejestracja
+- Opis: Użytkownik musi mieć możliwość założenia konta.
 - Kryteria akceptacji:
   1. Użytkownik może się zarejestrować podając minimalne dane (np. email, hasło).
-  2. Użytkownik może się zalogować używając swoich danych.
+  2. Użytkownik musi potwierdzić swój adres email.
+
+### US-001b: Logowanie użytkownika
+- ID: US-001b
+- Tytuł: Logowanie
+- Opis: Użytkownik musi mieć zalogowania się.
+- Kryteria akceptacji:
+  1. Użytkownik po potwierdzeniu swojego adresu email może się zalogować korzystając z adresu email oraz hasła.
 
 ### US-002: Generowanie fiszek przez AI
 - ID: US-002
 - Tytuł: Generowanie fiszek przez AI
 - Opis: Użytkownik wkleja tekst do interfejsu, a system wykorzystuje AI do wygenerowania propozycji fiszek. Propozycje są prezentowane użytkownikowi do akceptacji, odrzucenia lub edycji.
 - Kryteria akceptacji:
-  1. Po wklejeniu tekstu, AI generuje propozycje fiszek w czasie 30-40 sekund.
-  2. Wygenerowane fiszki są wyświetlane użytkownikowi z możliwością akceptacji, odrzucenia lub edycji.
-  3. Interakcje z AI są logowane z odpowiednimi metadanymi.
+  1. Użytkownik musi być zalogowany
+  2. Po wklejeniu tekstu, AI generuje propozycje fiszek w czasie 30-40 sekund.
+  3. Wygenerowane fiszki są wyświetlane użytkownikowi z możliwością akceptacji, odrzucenia lub edycji.
+  4. Interakcje z AI są logowane z odpowiednimi metadanymi.
 
 ### US-003: Przeglądanie i zarządzanie fiszkami
 - ID: US-003
 - Tytuł: Przeglądanie i zarządzanie fiszkami
 - Opis: Użytkownik może przeglądać wszystkie fiszki, edytować wybrane fiszki oraz je usuwać.
 - Kryteria akceptacji:
-  1. Użytkownik widzi listę fiszek w swoim koncie.
+  1. Zalogowany użytkownik widzi listę fiszek w swoim koncie.
   2. Użytkownik ma możliwość edycji treści fiszki (zarówno front, jak i back).
   3. Użytkownik może usunąć fiszkę
 
@@ -73,7 +81,7 @@ Użytkownicy napotykają problem związany z czasochłonnością ręcznego tworz
 - Tytuł: Ręczne tworzenie fiszek
 - Opis: Użytkownik ma możliwość samodzielnego tworzenia fiszek poprzez wprowadzenie treści obu stron (front i back) oraz zapisanie ich w systemie.
 - Kryteria akceptacji:
-  1. Użytkownik może utworzyć nową fiszkę poprzez wypełnienie pól dla obu stron.
+  1. Zalogowany użytkownik może utworzyć nową fiszkę poprzez wypełnienie pól dla obu stron.
   2. Fiszki są przechowywane w bazie danych z odpowiednim markerem wskazującym na manualne utworzenie.
 
 ### US-005: Edycja i usuwanie fiszek
@@ -81,7 +89,7 @@ Użytkownicy napotykają problem związany z czasochłonnością ręcznego tworz
 - Tytuł: Edycja i usuwanie fiszek
 - Opis: Użytkownik ma możliwość wprowadzania zmian w treści fiszek oraz ich usunięcia.
 - Kryteria akceptacji:
-  1. Użytkownik może wybrać fiszkę do edycji i dokonać zmian w treści.
+  1. Zalogowany użytkownik może wybrać fiszkę do edycji i dokonać zmian w treści.
   2. Użytkownik może usunąć fiszkę, a system potwierdza wykonanie operacji.
 
 ## 6. Metryki sukcesu
