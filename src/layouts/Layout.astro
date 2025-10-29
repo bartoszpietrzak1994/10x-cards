@@ -1,12 +1,17 @@
 ---
 import "../styles/global.css";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { UserMenu } from "@/components/auth/UserMenu";
+import { Button } from "@/components/ui/button";
 
 interface Props {
   title?: string;
 }
 
 const { title = "10x Astro Starter" } = Astro.props;
+
+// Get authenticated user from middleware
+const user = Astro.locals.user;
 ---
 
 <!doctype html>
@@ -38,7 +43,24 @@ const { title = "10x Astro Starter" } = Astro.props;
           </a>
         </div>
         <div class="flex flex-1 items-center justify-end space-x-2">
-          <nav class="flex items-center">
+          <nav class="flex items-center gap-2">
+            {user ? (
+              <>
+                <a href="/flashcards/ai-generation">
+                  <Button variant="ghost" size="sm">Generate Flashcards</Button>
+                </a>
+                <UserMenu user={user} client:load />
+              </>
+            ) : (
+              <>
+                <a href="/auth/login">
+                  <Button variant="ghost" size="sm">Sign In</Button>
+                </a>
+                <a href="/auth/register">
+                  <Button size="sm">Sign Up</Button>
+                </a>
+              </>
+            )}
             <ThemeToggle client:load />
           </nav>
         </div>

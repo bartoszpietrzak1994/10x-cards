@@ -13,10 +13,30 @@ const type = url.searchParams.get("type");
 // Validate parameters
 const hasValidParams = tokenHash && type === "signup";
 
-// TODO: After backend implementation, verify the token with Supabase
-// For now, we just show the UI based on token presence
-const isConfirmed = hasValidParams;
-const error = !hasValidParams ? "The confirmation link is invalid or has expired." : null;
+let isConfirmed = false;
+let error: string | null = null;
+
+// Verify the token with Supabase
+if (hasValidParams && tokenHash) {
+  try {
+    const { error: verifyError } = await Astro.locals.supabase.auth.verifyOtp({
+      token_hash: tokenHash,
+      type: "signup",
+    });
+
+    if (verifyError) {
+      console.error("Email verification error:", verifyError);
+      error = "The confirmation link is invalid or has expired. Please request a new confirmation email.";
+    } else {
+      isConfirmed = true;
+    }
+  } catch (err) {
+    console.error("Unexpected error during email verification:", err);
+    error = "An unexpected error occurred during email confirmation. Please try again later.";
+  }
+} else {
+  error = "The confirmation link is invalid or has expired.";
+}
 ---
 
 <Layout title="Confirm Email - 10xCards">

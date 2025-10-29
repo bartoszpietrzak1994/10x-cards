@@ -1,34 +1,33 @@
 import type { APIRoute } from "astro";
 import { z } from "zod";
-import { loginUser, AuthServiceError } from "@/lib/services/authService";
+import { registerUser, AuthServiceError } from "@/lib/services/authService";
 
 export const prerender = false;
 
 /**
- * Zod schema for login request validation
+ * Zod schema for registration request validation
  */
-const loginSchema = z.object({
+const registerSchema = z.object({
   email: z.string().email("Invalid email format"),
-  password: z.string().min(1, "Password is required"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
 /**
- * POST /api/auth/login
+ * POST /api/auth/register
  * 
- * Authenticates a user and creates a session.
+ * Registers a new user in the system.
  * 
  * Request Body:
  * - email: string (valid email format)
- * - password: string (required)
+ * - password: string (minimum 6 characters)
  * 
  * Responses:
- * - 200: Login successful, session cookies set
+ * - 201: Registration successful, confirmation email sent
  * - 400: Invalid request data
- * - 401: Invalid credentials
- * - 403: Email not confirmed
+ * - 409: Email already registered
  * - 500: Server error
  */
-export const POST: APIRoute = async ({ request, locals, cookies }) => {
+export const POST: APIRoute = async ({ request, locals }) => {
   try {
     // Parse request body
     let body;
@@ -47,7 +46,7 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
     }
 
     // Validate request body
-    const validation = loginSchema.safeParse(body);
+    const validation = registerSchema.safeParse(body);
     if (!validation.success) {
       return new Response(
         JSON.stringify({
@@ -66,51 +65,28 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
 
     const { email, password } = validation.data;
 
-    // Login user through service
-    const result = await loginUser(locals.supabase, {
+    // Register user through service
+    const result = await registerUser(locals.supabase, {
       email,
       password,
     });
 
-    // Set session cookies
-    // Note: When using @supabase/ssr with createServerClient,
-    // cookies are automatically set by the client through the middleware
-    // However, we can explicitly set them here for clarity
-    cookies.set("sb-access-token", result.session.access_token, {
-      httpOnly: true,
-      secure: import.meta.env.PROD,
-      sameSite: "lax",
-      path: "/",
-      maxAge: 60 * 60, // 1 hour
-    });
-
-    cookies.set("sb-refresh-token", result.session.refresh_token, {
-      httpOnly: true,
-      secure: import.meta.env.PROD,
-      sameSite: "lax",
-      path: "/",
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-    });
-
-    // Return user data (without session tokens)
     return new Response(
-      JSON.stringify({
-        message: result.message,
-        user: result.user,
-      }),
+      JSON.stringify(result),
       {
-        status: 200,
+        status: 201,
         headers: { "Content-Type": "application/json" },
       }
     );
   } catch (error) {
-    console.error("Unexpected error in POST /api/auth/login:", error);
+    console.error("Unexpected error in POST /api/auth/register:", error);
 
     // Handle AuthServiceError with proper status codes
     if (error instanceof AuthServiceError) {
       const statusCodeMap: Record<string, number> = {
-        INVALID_CREDENTIALS: 401,
-        EMAIL_NOT_CONFIRMED: 403,
+        USER_ALREADY_EXISTS: 409,
+        WEAK_PASSWORD: 400,
+        EMAIL_SEND_FAILED: 500,
         AUTH_ERROR: 500,
         DATABASE_ERROR: 500,
       };
@@ -133,7 +109,7 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
     if (error instanceof Error) {
       return new Response(
         JSON.stringify({
-          error: "Login failed",
+          error: "Registration failed",
           message: error.message,
         }),
         {
@@ -156,3 +132,4 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
     );
   }
 };
+

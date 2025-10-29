@@ -1,11 +1,12 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 import { RegisterForm } from "@/components/auth/RegisterForm";
+import { requireGuest } from "@/lib/auth-helpers";
 
 export const prerender = false;
 
-// TODO: After middleware implementation, add requireGuest(Astro) check
-// For now, we just render the page
+// Redirect to home if already authenticated
+requireGuest(Astro);
 ---
 
 <Layout title="Sign Up - 10xCards">

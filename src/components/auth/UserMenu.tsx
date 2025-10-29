@@ -8,7 +8,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { User, LogOut, Sparkles, FileText } from "lucide-react";
 
 interface UserMenuProps {
   user: {
@@ -21,8 +20,6 @@ export function UserMenu({ user }: UserMenuProps) {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleLogout = async () => {
-    if (isLoggingOut) return;
-
     setIsLoggingOut(true);
 
     try {
@@ -32,6 +29,7 @@ export function UserMenu({ user }: UserMenuProps) {
       });
 
       if (response.ok) {
+        // Redirect to login page
         window.location.href = "/auth/login";
       } else {
         console.error("Logout failed");
@@ -39,7 +37,7 @@ export function UserMenu({ user }: UserMenuProps) {
       }
     } catch (error) {
       console.error("Logout error:", error);
-      alert("A network error occurred. Please try again.");
+      alert("An error occurred during logout. Please try again.");
     } finally {
       setIsLoggingOut(false);
     }
@@ -48,41 +46,42 @@ export function UserMenu({ user }: UserMenuProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" aria-label="User menu">
-          <User className="size-5" />
+        <Button variant="ghost" className="gap-2">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+            <circle cx="12" cy="7" r="4" />
+          </svg>
+          <span className="hidden sm:inline">{user.email}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel className="font-normal">
-          <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">Account</p>
-            <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
-          </div>
-        </DropdownMenuLabel>
+        <DropdownMenuLabel>My Account</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <a href="/flashcards" className="flex items-center cursor-pointer">
-            <FileText className="mr-2 size-4" />
-            <span>My Flashcards</span>
-          </a>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <a href="/flashcards/ai-generation" className="flex items-center cursor-pointer">
-            <Sparkles className="mr-2 size-4" />
-            <span>Generate with AI</span>
+          <a href="/flashcards/ai-generation" className="cursor-pointer">
+            Generate Flashcards
           </a>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={handleLogout}
           disabled={isLoggingOut}
-          className="cursor-pointer"
+          className="cursor-pointer text-destructive focus:text-destructive"
         >
-          <LogOut className="mr-2 size-4" />
-          <span>{isLoggingOut ? "Logging out..." : "Log out"}</span>
+          {isLoggingOut ? "Logging out..." : "Log out"}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
 }
-

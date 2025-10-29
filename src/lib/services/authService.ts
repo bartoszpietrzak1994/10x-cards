@@ -1,10 +1,17 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "@/db/database.types";
-import type { LoginUserCommand, UserDTO, LoginResponseDTO } from "@/types";
-import type { Session } from "@supabase/supabase-js";
+import type {
+  RegisterUserCommand,
+  LoginUserCommand,
+  RecoverPasswordCommand,
+  ResetPasswordCommand,
+  UserDTO,
+  RegisterResponseDTO,
+  LoginResponseDTO,
+} from "@/types";
 
 /**
- * Custom error class for authentication service errors
+ * Custom error class for authentication service errors.
+ * Provides structured error handling with specific error codes.
  */
 export class AuthServiceError extends Error {
   constructor(
@@ -31,41 +38,105 @@ export class AuthServiceError extends Error {
  */
 
 /**
- * Logs a user into the system.
+ * Registers a new user in the system.
  * 
  * Process:
- * 1. Authenticates user with Supabase Auth using email and password
- * 2. Verifies that email has been confirmed
- * 3. Fetches user data from public.users table (including role)
- * 4. Returns session and user data
+ * 1. Creates user in Supabase Auth (auth.users)
+ * 2. Supabase automatically sends confirmation email
+ * 3. Database trigger creates record in public.users after email confirmation
  * 
- * @param supabase - Supabase client
- * @param command - Login credentials (email, password)
- * @returns Promise with user data and session
+ * @param supabase - Supabase client instance
+ * @param command - Registration data (email, password)
+ * @returns Promise with created user data
+ * @throws AuthServiceError
+ */
+export async function registerUser(
+  supabase: SupabaseClient,
+  command: RegisterUserCommand
+): Promise<RegisterResponseDTO> {
+  try {
+    const { data, error } = await supabase.auth.signUp({
+      email: command.email,
+      password: command.password,
+      options: {
+        emailRedirectTo: `${import.meta.env.SITE || "http://localhost:4321"}/auth/confirm-email`,
+      },
+    });
+
+    if (error) {
+      // Check for specific error types
+      if (error.message.toLowerCase().includes("already registered") || 
+          error.message.toLowerCase().includes("already exists")) {
+        throw new AuthServiceError(
+          "This email address is already registered",
+          "USER_ALREADY_EXISTS",
+          error
+        );
+      }
+
+      if (error.message.toLowerCase().includes("password")) {
+        throw new AuthServiceError(
+          "Password does not meet security requirements",
+          "WEAK_PASSWORD",
+          error
+        );
+      }
+
+      throw new AuthServiceError(
+        "Failed to register user",
+        "AUTH_ERROR",
+        error
+      );
+    }
+
+    if (!data.user) {
+      throw new AuthServiceError(
+        "Failed to create user account",
+        "AUTH_ERROR"
+      );
+    }
+
+    return {
+      message: "Registration successful. Please check your email to confirm your account.",
+      user: {
+        id: data.user.id,
+        email: data.user.email!,
+      },
+    };
+  } catch (error) {
+    if (error instanceof AuthServiceError) {
+      throw error;
+    }
+
+    throw new AuthServiceError(
+      "An unexpected error occurred during registration",
+      "AUTH_ERROR",
+      error
+    );
+  }
+}
+
+/**
+ * Logs a user into the system.
+ * 
+ * @param supabase - Supabase client instance
+ * @param command - Login data (email, password)
+ * @returns Promise with logged-in user data and session
  * @throws AuthServiceError
  */
 export async function loginUser(
-  supabase: SupabaseClient<Database>,
+  supabase: SupabaseClient,
   command: LoginUserCommand
-): Promise<LoginResponseDTO & { session: Session }> {
+): Promise<LoginResponseDTO & { session: { access_token: string; refresh_token: string } }> {
   try {
-    // Authenticate with Supabase Auth
     const { data, error } = await supabase.auth.signInWithPassword({
       email: command.email,
       password: command.password,
     });
 
     if (error) {
-      // Handle specific authentication errors
-      if (error.message.includes("Invalid login credentials")) {
-        throw new AuthServiceError(
-          "Invalid email or password",
-          "INVALID_CREDENTIALS",
-          error
-        );
-      }
-
-      if (error.message.includes("Email not confirmed")) {
+      // Check if email is not confirmed
+      if (error.message.toLowerCase().includes("email not confirmed")) {
         throw new AuthServiceError(
           "Your account has not been confirmed yet. Please check your email inbox.",
           "EMAIL_NOT_CONFIRMED",
@@ -73,71 +144,37 @@ export async function loginUser(
         );
       }
 
+      // Invalid credentials
       throw new AuthServiceError(
-        "Authentication failed",
-        "AUTH_ERROR",
+        "Invalid email or password",
+        "INVALID_CREDENTIALS",
         error
       );
     }
 
     if (!data.session || !data.user) {
       throw new AuthServiceError(
-        "No session returned after authentication",
+        "Failed to create session",
         "AUTH_ERROR"
       );
     }
 
-    // Check if email is confirmed (additional safety check)
-    if (!data.user.email_confirmed_at) {
-      throw new AuthServiceError(
-        "Your account has not been confirmed yet. Please check your email inbox.",
-        "EMAIL_NOT_CONFIRMED"
-      );
-    }
-
     // Fetch user data from public.users table with role
-    const { data: userData, error: userError } = await supabase
-      .from("users")
-      .select("id, email, roles(name)")
-      .eq("id", data.user.id)
-      .single();
-
-    if (userError) {
-      console.error("Error fetching user data:", userError);
-      throw new AuthServiceError(
-        "Failed to fetch user data",
-        "DATABASE_ERROR",
-        userError
-      );
-    }
-
-    if (!userData) {
-      throw new AuthServiceError(
-        "User not found in database",
-        "DATABASE_ERROR"
-      );
-    }
-
-    // Create UserDTO
-    const user: UserDTO = {
-      id: userData.id,
-      email: userData.email,
-      role: (userData.roles as any)?.name || "user",
-    };
+    const userData = await getUserFromSession(supabase, data.user.id);
 
     return {
       message: "Login successful",
-      user,
-      session: data.session,
+      user: userData,
+      session: {
+        access_token: data.session.access_token,
+        refresh_token: data.session.refresh_token,
+      },
     };
   } catch (error) {
-    // Re-throw AuthServiceError as-is
     if (error instanceof AuthServiceError) {
       throw error;
     }
 
-    // Wrap unexpected errors
-    console.error("Unexpected error in loginUser:", error);
     throw new AuthServiceError(
       "An unexpected error occurred during login",
       "AUTH_ERROR",
@@ -147,16 +184,148 @@ export async function loginUser(
 }
 
 /**
- * Helper function to get user data from session.
- * Used by middleware and other services.
+ * Logs out a user from the system.
  * 
- * @param supabase - Supabase client
- * @param userId - ID of the user from auth.users
- * @returns Promise with user data (UserDTO)
+ * @param supabase - Supabase client instance
+ * @throws AuthServiceError
+ */
+export async function logoutUser(
+  supabase: SupabaseClient
+): Promise<void> {
+  try {
+    const { error } = await supabase.auth.signOut();
+
+    if (error) {
+      throw new AuthServiceError(
+        "Failed to logout user",
+        "AUTH_ERROR",
+        error
+      );
+    }
+  } catch (error) {
+    if (error instanceof AuthServiceError) {
+      throw error;
+    }
+
+    throw new AuthServiceError(
+      "An unexpected error occurred during logout",
+      "AUTH_ERROR",
+      error
+    );
+  }
+}
+
+/**
+ * Initiates the password recovery process.
+ * Sends a password recovery email to the user.
+ * 
+ * @param supabase - Supabase client instance
+ * @param command - Email and redirect URL
+ * @throws AuthServiceError
+ */
+export async function recoverPassword(
+  supabase: SupabaseClient,
+  command: RecoverPasswordCommand
+): Promise<void> {
+  try {
+    const { error } = await supabase.auth.resetPasswordForEmail(
+      command.email,
+      {
+        redirectTo: command.redirectTo,
+      }
+    );
+
+    if (error) {
+      throw new AuthServiceError(
+        "Failed to send password recovery email",
+        "EMAIL_SEND_FAILED",
+        error
+      );
+    }
+
+    // Always return success (don't reveal if email exists)
+  } catch (error) {
+    if (error instanceof AuthServiceError) {
+      throw error;
+    }
+
+    throw new AuthServiceError(
+      "An unexpected error occurred during password recovery",
+      "AUTH_ERROR",
+      error
+    );
+  }
+}
+
+/**
+ * Resets user password using a recovery token.
+ * 
+ * @param supabase - Supabase client instance
+ * @param command - Token and new password
+ * @throws AuthServiceError
+ */
+export async function resetPassword(
+  supabase: SupabaseClient,
+  command: ResetPasswordCommand
+): Promise<void> {
+  try {
+    // Verify the OTP token first
+    const { error: verifyError } = await supabase.auth.verifyOtp({
+      token_hash: command.token,
+      type: "recovery",
+    });
+
+    if (verifyError) {
+      if (verifyError.message.toLowerCase().includes("expired")) {
+        throw new AuthServiceError(
+          "The password reset link has expired. Please request a new one.",
+          "TOKEN_EXPIRED",
+          verifyError
+        );
+      }
+
+      throw new AuthServiceError(
+        "The password reset link is invalid or has expired. Please request a new link.",
+        "INVALID_TOKEN",
+        verifyError
+      );
+    }
+
+    // Update the password
+    const { error: updateError } = await supabase.auth.updateUser({
+      password: command.password,
+    });
+
+    if (updateError) {
+      throw new AuthServiceError(
+        "Failed to update password",
+        "AUTH_ERROR",
+        updateError
+      );
+    }
+  } catch (error) {
+    if (error instanceof AuthServiceError) {
+      throw error;
+    }
+
+    throw new AuthServiceError(
+      "An unexpected error occurred during password reset",
+      "AUTH_ERROR",
+      error
+    );
+  }
+}
+
+/**
+ * Fetches complete user data from the public.users table.
+ * 
+ * @param supabase - Supabase client instance
+ * @param userId - User ID from auth.users
+ * @returns Promise with UserDTO
  * @throws AuthServiceError
  */
 export async function getUserFromSession(
-  supabase: SupabaseClient<Database>,
+  supabase: SupabaseClient,
   userId: string
 ): Promise<UserDTO> {
   try {
@@ -166,18 +335,11 @@ export async function getUserFromSession(
       .eq("id", userId)
       .single();
 
-    if (error) {
+    if (error || !data) {
       throw new AuthServiceError(
         "Failed to fetch user data",
         "DATABASE_ERROR",
         error
-      );
-    }
-
-    if (!data) {
-      throw new AuthServiceError(
-        "User not found in database",
-        "DATABASE_ERROR"
       );
     }
 
@@ -191,12 +353,10 @@ export async function getUserFromSession(
       throw error;
     }
 
-    console.error("Unexpected error in getUserFromSession:", error);
     throw new AuthServiceError(
-      "Failed to get user from session",
+      "An unexpected error occurred while fetching user data",
       "DATABASE_ERROR",
       error
     );
   }
 }
-

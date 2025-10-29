@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,15 +20,6 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
   const [errors, setErrors] = useState<FormErrors>({});
   const [generalError, setGeneralError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (successMessage) {
-      const timer = setTimeout(() => {
-        window.location.href = "/auth/login";
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [successMessage]);
 
   const validateField = (name: string, value: string): string | undefined => {
     switch (name) {
@@ -81,9 +72,13 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
 
       if (!response.ok) {
         if (response.status === 400) {
-          setGeneralError(
-            "The password reset link is invalid or has expired. Please request a new link."
-          );
+          if (data.code === "INVALID_TOKEN" || data.code === "TOKEN_EXPIRED") {
+            setGeneralError(
+              "The password reset link is invalid or has expired. Please request a new link."
+            );
+          } else {
+            setGeneralError("The data is invalid. Please check the form and try again.");
+          }
         } else {
           setGeneralError("A server error occurred. Please try again later.");
         }
@@ -93,9 +88,16 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
       setSuccessMessage(
         "Password has been changed successfully. We will redirect you to the login page shortly."
       );
+
+      // Clear form
       setPassword("");
       setConfirmPassword("");
       setErrors({});
+
+      // Redirect to login after 3 seconds
+      setTimeout(() => {
+        window.location.href = "/auth/login";
+      }, 3000);
     } catch (error) {
       console.error("Password reset error:", error);
       setGeneralError("A network error occurred. Please try again later.");
@@ -130,7 +132,6 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
           aria-invalid={!!errors.password}
           aria-describedby={errors.password ? "password-error" : undefined}
           placeholder="At least 6 characters"
-          autoFocus
         />
         {errors.password && (
           <p id="password-error" className="text-sm text-destructive" role="alert">
@@ -165,4 +166,3 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
     </form>
   );
 }
-

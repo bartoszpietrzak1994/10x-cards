@@ -1,50 +1,60 @@
 import type { AstroGlobal } from "astro";
 
 /**
- * Checks if user is authenticated and returns boolean.
- * Does not perform redirection.
+ * Checks if the user is authenticated.
+ * If not, redirects to the login page with a redirect parameter.
  * 
- * Usage: const isAuthenticated = checkAuth(Astro);
+ * Usage in .astro pages:
+ * ```astro
+ * ---
+ * import { requireAuth } from "@/lib/auth-helpers";
+ * requireAuth(Astro);
+ * ---
+ * ```
  * 
  * @param Astro - Astro global object
- * @returns true if user is authenticated, false otherwise
+ */
+export function requireAuth(Astro: AstroGlobal): void {
+  if (!Astro.locals.user) {
+    const currentPath = Astro.url.pathname + Astro.url.search;
+    return Astro.redirect(`/auth/login?redirect=${encodeURIComponent(currentPath)}`);
+  }
+}
+
+/**
+ * Checks if the user is authenticated (without redirecting).
+ * Returns true if authenticated, false otherwise.
+ * 
+ * Usage:
+ * ```astro
+ * ---
+ * import { checkAuth } from "@/lib/auth-helpers";
+ * const isAuthenticated = checkAuth(Astro);
+ * ---
+ * ```
+ * 
+ * @param Astro - Astro global object
+ * @returns boolean indicating if user is authenticated
  */
 export function checkAuth(Astro: AstroGlobal): boolean {
   return Astro.locals.user !== null;
 }
 
 /**
- * Requires user to be authenticated.
- * If not authenticated, redirects to login page with redirect parameter.
+ * Checks if the user is a guest (not authenticated).
+ * If user is authenticated, redirects to the home page.
  * 
- * Usage in protected .astro pages:
- * ---
- * import { requireAuth } from "@/lib/auth-helpers";
- * requireAuth(Astro);
- * ---
- * 
- * @param Astro - Astro global object
- * @throws Redirects to /auth/login if user is not authenticated
- */
-export function requireAuth(Astro: AstroGlobal): void {
-  if (!Astro.locals.user) {
-    const currentPath = Astro.url.pathname;
-    return Astro.redirect(`/auth/login?redirect=${encodeURIComponent(currentPath)}`);
-  }
-}
-
-/**
- * Requires user to be a guest (not authenticated).
- * If authenticated, redirects to home page.
+ * Useful for login/register pages to prevent authenticated users from accessing them.
  * 
  * Usage in auth pages (login, register):
+ * ```astro
  * ---
  * import { requireGuest } from "@/lib/auth-helpers";
  * requireGuest(Astro);
  * ---
+ * ```
  * 
  * @param Astro - Astro global object
- * @throws Redirects to / if user is already authenticated
  */
 export function requireGuest(Astro: AstroGlobal): void {
   if (Astro.locals.user) {
@@ -53,14 +63,20 @@ export function requireGuest(Astro: AstroGlobal): void {
 }
 
 /**
- * Gets the current authenticated user or null.
+ * Gets the authenticated user from Astro.locals.
+ * Returns null if not authenticated.
  * 
- * Usage: const user = getCurrentUser(Astro);
+ * Usage:
+ * ```astro
+ * ---
+ * import { getUser } from "@/lib/auth-helpers";
+ * const user = getUser(Astro);
+ * ---
+ * ```
  * 
  * @param Astro - Astro global object
- * @returns UserDTO if authenticated, null otherwise
+ * @returns UserDTO or null
  */
-export function getCurrentUser(Astro: AstroGlobal) {
+export function getUser(Astro: AstroGlobal) {
   return Astro.locals.user;
 }
-

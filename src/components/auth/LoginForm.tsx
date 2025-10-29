@@ -79,9 +79,9 @@ export function LoginForm() {
         return;
       }
 
-      // Get redirect URL from query params or default to home
-      const params = new URLSearchParams(window.location.search);
-      const redirect = params.get("redirect") || "/";
+      // Success - redirect to home page or redirect parameter
+      const urlParams = new URLSearchParams(window.location.search);
+      const redirect = urlParams.get("redirect") || "/";
       window.location.href = redirect;
     } catch (error) {
       console.error("Login error:", error);
@@ -111,7 +111,6 @@ export function LoginForm() {
           aria-invalid={!!errors.email}
           aria-describedby={errors.email ? "email-error" : undefined}
           placeholder="your@email.com"
-          autoFocus
         />
         {errors.email && (
           <p id="email-error" className="text-sm text-destructive" role="alert">
@@ -161,4 +160,3 @@ export function LoginForm() {
     </form>
   );
 }
-

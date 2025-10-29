@@ -1,6 +1,12 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 import AIGenerationView from "@/components/AIGenerationView";
+import { requireAuth } from "@/lib/auth-helpers";
+
+export const prerender = false;
+
+// Require authentication to access this page
+requireAuth(Astro);
 ---
 
 <Layout title="AI Flashcards Generation">

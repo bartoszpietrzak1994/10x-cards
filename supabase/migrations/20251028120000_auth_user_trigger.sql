@@ -46,6 +46,5 @@ GRANT ALL ON FUNCTION public.handle_new_user() TO postgres, service_role;
 
 -- Add comment for documentation
 COMMENT ON FUNCTION public.handle_new_user() IS 'Automatically creates a user record in public.users when auth.users email is confirmed';
-COMMENT ON TRIGGER on_auth_user_created ON auth.users IS 'Creates user record when email is confirmed during registration';
-COMMENT ON TRIGGER on_auth_user_confirmed ON auth.users IS 'Creates user record when email is confirmed after registration';
+-- Note: Cannot add comments on triggers in auth schema due to permission restrictions
 

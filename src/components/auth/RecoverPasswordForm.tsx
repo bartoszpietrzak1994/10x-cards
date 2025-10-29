@@ -32,11 +32,11 @@ export function RecoverPasswordForm() {
     e.preventDefault();
     setSuccessMessage(null);
 
-    // Validate email
-    const error = validateField("email", email);
-    setErrors({ email: error });
+    // Validate field
+    const emailError = validateField("email", email);
+    setErrors({ email: emailError });
 
-    if (error) {
+    if (emailError) {
       return;
     }
 
@@ -49,19 +49,26 @@ export function RecoverPasswordForm() {
         body: JSON.stringify({ email }),
       });
 
+      const data = await response.json();
+
       // Always show success message for security reasons
-      if (response.ok || response.status === 404) {
+      if (response.ok) {
         setSuccessMessage(
           "If the provided email address exists in our system, we will send password reset instructions to it."
         );
         setEmail("");
-        setErrors({});
       } else {
-        setErrors({ email: "An error occurred while sending the email. Please try again later." });
+        // Even on error, show success message for security
+        setSuccessMessage(
+          "If the provided email address exists in our system, we will send password reset instructions to it."
+        );
       }
     } catch (error) {
       console.error("Password recovery error:", error);
-      setErrors({ email: "A network error occurred. Please try again later." });
+      // Show success message even on network error for security
+      setSuccessMessage(
+        "If the provided email address exists in our system, we will send password reset instructions to it."
+      );
     } finally {
       setIsLoading(false);
     }
@@ -87,7 +94,6 @@ export function RecoverPasswordForm() {
           aria-invalid={!!errors.email}
           aria-describedby={errors.email ? "email-error" : undefined}
           placeholder="your@email.com"
-          autoFocus
         />
         {errors.email && (
           <p id="email-error" className="text-sm text-destructive" role="alert">
@@ -97,7 +103,7 @@ export function RecoverPasswordForm() {
       </div>
 
       <Button type="submit" disabled={isLoading} className="w-full">
-        {isLoading ? "Sending instructions..." : "Send Reset Instructions"}
+        {isLoading ? "Sending..." : "Send Instructions"}
       </Button>
 
       <p className="text-center text-sm text-muted-foreground">
@@ -109,4 +115,3 @@ export function RecoverPasswordForm() {
     </form>
   );
 }
-
