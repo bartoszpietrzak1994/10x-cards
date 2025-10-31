@@ -20,5 +20,16 @@ AI
   - Optymalizację kosztów przy zachowaniu wysokiej efektywności.
 
 CI/CD i Hosting
-- Github Actions – automatyzacja pipeline’ów CI/CD.
+- Github Actions – automatyzacja pipeline'ów CI/CD.
 - DigitalOcean – hosting aplikacji za pomocą kontenerów Docker, gwarantujący skalowalność i niezawodność.
+
+Testowanie
+- Vitest – szybki test runner do testów jednostkowych i integracyjnych, zintegrowany z Vite/Astro.
+- React Testing Library – testowanie komponentów React z perspektywy użytkownika.
+- @testing-library/user-event – symulacja interakcji użytkownika w testach.
+- @testing-library/jest-dom – custom matchers do testowania DOM.
+- @astro/test – oficjalne narzędzie do testowania komponentów Astro i zachowań SSR.
+- MSW (Mock Service Worker) – mockowanie requestów HTTP/API dla niezawodnych testów.
+- Playwright – nowoczesny framework do testów E2E z wsparciem dla wielu przeglądarek.
+- c8/istanbul – narzędzia do raportowania pokrycia kodu testami.
+- Codecov/Coveralls – hosting i raportowanie pokrycia kodu.

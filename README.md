@@ -21,6 +21,17 @@
   - **GitHub Actions:** Automates the CI/CD pipelines.
   - **DigitalOcean:** Hosts the application using Docker containers for scalability and reliability.
 
+- **Testing:**
+  - **Vitest:** Fast test runner for unit and integration tests, integrated with Vite/Astro.
+  - **React Testing Library:** Tests React components from the user's perspective.
+  - **@testing-library/user-event:** Simulates user interactions in tests.
+  - **@testing-library/jest-dom:** Provides custom matchers for DOM testing.
+  - **@astro/test:** Official tool for testing Astro components and SSR behavior.
+  - **MSW (Mock Service Worker):** Mocks HTTP/API requests for reliable testing.
+  - **Playwright:** Modern E2E testing framework with multi-browser support.
+  - **c8/istanbul:** Code coverage reporting tools.
+  - **Codecov/Coveralls:** Coverage hosting and reporting services.
+
 ## Getting Started Locally
 1. **Clone the Repository:**
    ```bash
