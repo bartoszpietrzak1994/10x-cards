@@ -11,7 +11,7 @@ dist/
 
 # Ignore environment variable files
 .env
-.env.* 
+.env.*
 
 # Ignore editor directories (e.g., VSCode, IntelliJ)
 .vscode/

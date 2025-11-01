@@ -46,6 +46,9 @@ const user = Astro.locals.user;
           <nav class="flex items-center gap-2">
             {user ? (
               <>
+                <a href="/flashcards/create">
+                  <Button variant="ghost" size="sm">Create Flashcard</Button>
+                </a>
                 <a href="/flashcards/ai-generation">
                   <Button variant="ghost" size="sm">Generate Flashcards</Button>
                 </a>

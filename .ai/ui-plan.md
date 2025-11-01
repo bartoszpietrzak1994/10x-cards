@@ -37,6 +37,24 @@ The 10xCards UI is structured to offer an intuitive, minimal, and responsive exp
 - **Key View Components:** Large text input form, submit button, loading spinner overlay, status messages, and a results display area for generated flashcards.
 - **UX, Accessibility, and Security Considerations:** Input validation (character limits), clear error messaging for invalid input length, accessibility for loading states, and secure handling of submitted data.
 
+### e. Create Manual Flashcard
+- **View Name:** Create Manual Flashcard
+- **View Path:** `/flashcards/create`
+- **Main Purpose:** Allow users to manually create a new flashcard by entering content for both the front and back and saving it into the system.
+- **Key Information:**
+  - Input fields for the flashcard’s front and back content
+  - Real-time validations for both fields
+  - Confirmation alerts upon successful creation
+- **Key View Components:**
+  - A dedicated form with two multi-line text input areas
+  - Inline validation messages and loading indicators
+  - Submit button to trigger creation
+  - Navigation or feedback upon successful flashcard creation
+- **UX, Accessibility, and Security Considerations:**
+  - Clear and accessible labels for form inputs
+  - Proper focus management and keyboard navigation
+  - Secure handling and validation to prevent injection attacks
+
 ### e. Account Settings
 - **View Name:** User Account Settings
 - **View Path:** `/account`

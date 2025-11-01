@@ -1,0 +1,28 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { ManualFlashcardForm } from "@/components/flashcards/ManualFlashcardForm";
+
+export const prerender = false;
+
+// Get authenticated user from middleware
+const user = Astro.locals.user;
+
+// Redirect to login if not authenticated
+if (!user) {
+  return Astro.redirect("/auth/login?redirect=/flashcards/create");
+}
+---
+
+<Layout title="Create Flashcard - 10xCards">
+  <div class="container max-w-2xl mx-auto py-8 px-4">
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold tracking-tight mb-2">Create Flashcard</h1>
+      <p class="text-muted-foreground">
+        Create a new flashcard by entering the question and answer below.
+      </p>
+    </div>
+    
+    <ManualFlashcardForm client:load />
+  </div>
+</Layout>
+
