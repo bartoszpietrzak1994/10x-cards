@@ -1,11 +1,15 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { supabaseClient } from "@/db/supabase.client";
-import type {
-  AIGenerationResponseDTO,
-  FlashcardProposal,
-  AILogDTO,
-} from "@/types";
+import { createAIGenerationClientService } from "@/lib/services/aiGenerationClientService";
+import { usePolling } from "./usePolling";
+import { useProposalEditing } from "./useProposalEditing";
+import { useProposalActions } from "./useProposalActions";
+import { aiGenerationInputSchema } from "@/lib/validators/flashcardSchemas";
+import type { AILogDTO } from "@/types";
 
+/**
+ * Generation metadata
+ */
 interface GenerationMeta {
   request_time: string;
   response_time: string | null;
@@ -14,16 +18,9 @@ interface GenerationMeta {
   model: string | null;
 }
 
-interface FlashcardProposalVM extends FlashcardProposal {
-  isEditing: boolean;
-  editFront: string;
-  editBack: string;
-  validationErrors?: {
-    front?: string;
-    back?: string;
-  };
-}
-
+/**
+ * View model for AI generation
+ */
 interface AIGenerationVM {
   inputText: string;
   inputLength: number;
@@ -33,165 +30,151 @@ interface AIGenerationVM {
   status: "idle" | "processing" | "completed" | "failed";
   aiLog?: AILogDTO;
   generationMeta?: GenerationMeta;
-  proposals: FlashcardProposalVM[];
   error?: string;
 }
 
-const POLLING_INTERVAL = 2000; // 2 seconds
-const MAX_POLLING_TIME = 45000; // 45 seconds
+/**
+ * Constants
+ */
+const POLLING_CONFIG = {
+  INTERVAL: 2000, // 2 seconds
+  MAX_TIME: 45000, // 45 seconds
+} as const;
 
+const INPUT_LIMITS = {
+  MIN: 1000,
+  MAX: 10000,
+} as const;
+
+/**
+ * Refactored AI Generation hook
+ * 
+ * This is an orchestrator hook that composes smaller, focused hooks:
+ * - usePolling: Handles periodic data fetching
+ * - useProposalEditing: Manages edit state and validation
+ * - useProposalActions: Handles API calls for proposals
+ * 
+ * Benefits of this approach:
+ * - Better separation of concerns
+ * - Easier to test individual hooks
+ * - More reusable components
+ * - Clearer data flow
+ */
 export function useAIGeneration() {
+  // Service instance
+  const service = useMemo(
+    () => createAIGenerationClientService(supabaseClient),
+    []
+  );
+
+  // Main state
   const [vm, setVm] = useState<AIGenerationVM>({
     inputText: "",
     inputLength: 0,
     isValidLength: false,
     isSubmitting: false,
     status: "idle",
-    proposals: [],
   });
 
-  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const pollingStartTimeRef = useRef<number>(0);
+  // Proposal editing state (using dedicated hook)
+  const {
+    proposals,
+    updateProposals,
+    startEdit,
+    updateEdit,
+    cancelEdit,
+    commitEdit,
+    setValidationError,
+    removeProposal,
+    getProposal,
+  } = useProposalEditing();
 
-  // Clear polling interval
-  const clearPolling = useCallback(() => {
-    if (pollingIntervalRef.current) {
-      clearInterval(pollingIntervalRef.current);
-      pollingIntervalRef.current = null;
-    }
-  }, []);
+  // Proposal actions (using dedicated hook)
+  const { accept, saveEdit, deleteProposal } = useProposalActions(service);
 
-  // Fetch generation status, metadata, and proposals
-  const fetchGenerationData = useCallback(async (generationId: number) => {
-    try {
-      // Fetch generation metadata
-      const { data: generationData, error: generationError } = await supabaseClient
-        .from("flashcards_ai_generation")
-        .select("request_time, response_time, token_count, model, generated_flashcards_count")
-        .eq("id", generationId)
-        .single();
+  /**
+   * Fetches generation data and updates state
+   */
+  const fetchAndUpdateData = useCallback(
+    async (generationId: number) => {
+      const data = await service.fetchGenerationData(generationId);
 
-      if (generationError) {
-        console.error("Error fetching generation data:", generationError);
-        return { status: "processing" as const };
+      setVm((prev) => ({
+        ...prev,
+        status: data.status,
+        aiLog: data.aiLog || undefined,
+        generationMeta: data.generationMeta || undefined,
+      }));
+
+      if (data.proposals) {
+        updateProposals(data.proposals);
       }
 
-      // Fetch AI log
-      const { data: logData, error: logError } = await supabaseClient
-        .from("ai_logs")
-        .select("request_time, response_time, token_count, error_info")
-        .eq("flashcards_generation_id", generationId)
-        .single();
+      return data;
+    },
+    [service, updateProposals]
+  );
 
-      if (logError) {
-        console.error("Error fetching AI log:", logError);
-      }
-
-      // Fetch proposals
-      const { data: proposalsData, error: proposalsError } = await supabaseClient
-        .from("flashcards")
-        .select("id, front, back, flashcard_type, created_at, ai_generation_id")
-        .eq("ai_generation_id", generationId)
-        .in("flashcard_type", ["ai-generated", "ai-proposal"])
-        .order("created_at", { ascending: true });
-
-      if (proposalsError) {
-        console.error("Error fetching proposals:", proposalsError);
-      }
-
-      // Determine status
-      let status: "processing" | "completed" | "failed" = "processing";
-      if (logData?.error_info) {
-        status = "failed";
-      } else if (generationData.response_time) {
-        status = "completed";
-      }
-
-      return {
-        status,
-        aiLog: logData || undefined,
-        generationMeta: generationData || undefined,
-        proposals: proposalsData || [],
-      };
-    } catch (error) {
-      console.error("Error in fetchGenerationData:", error);
-      return { status: "processing" as const };
-    }
-  }, []);
-
-  // Start polling
-  const startPolling = useCallback(
-    (generationId: number) => {
-      clearPolling();
-      pollingStartTimeRef.current = Date.now();
-
-      const poll = async () => {
-        const elapsed = Date.now() - pollingStartTimeRef.current;
-
-        // Stop polling after max time
-        if (elapsed > MAX_POLLING_TIME) {
-          clearPolling();
-          setVm((prev) => ({
+  /**
+   * Polling hook for auto-refresh
+   */
+  const { start: startPolling } = usePolling({
+    fetcher: async () => {
+      if (!vm.generationId) throw new Error("No generation ID");
+      return await fetchAndUpdateData(vm.generationId);
+    },
+    interval: POLLING_CONFIG.INTERVAL,
+    maxTime: POLLING_CONFIG.MAX_TIME,
+    onData: () => {
+      // Data is already updated in fetchAndUpdateData
+    },
+    shouldStop: (data) => data.status === "completed" || data.status === "failed",
+    onStop: () => {
+      setVm((prev) => {
+        if (prev.status === "processing") {
+          return {
             ...prev,
             status: "completed",
             error: "Polling timeout. Use refresh to check status manually.",
-          }));
-          return;
+          };
         }
-
-        const data = await fetchGenerationData(generationId);
-
-        setVm((prev) => ({
-          ...prev,
-          status: data.status,
-          aiLog: data.aiLog,
-          generationMeta: data.generationMeta,
-          proposals:
-            data.proposals?.map((p) => ({
-              ...p,
-              isEditing: false,
-              editFront: p.front,
-              editBack: p.back,
-            })) || prev.proposals,
-        }));
-
-        // Stop polling if completed or failed
-        if (data.status === "completed" || data.status === "failed") {
-          clearPolling();
-        }
-      };
-
-      // Initial poll
-      poll();
-
-      // Set up interval
-      pollingIntervalRef.current = setInterval(poll, POLLING_INTERVAL);
+        return prev;
+      });
     },
-    [fetchGenerationData, clearPolling]
-  );
+    enabled: vm.status === "processing",
+  });
 
-
-  // Clean up on unmount
-  useEffect(() => {
-    return () => {
-      clearPolling();
-    };
-  }, [clearPolling]);
-
-  // Set input text
+  /**
+   * Sets input text and validates length
+   */
   const setInputText = useCallback((text: string) => {
     const length = text.length;
+    const isValid = length >= INPUT_LIMITS.MIN && length <= INPUT_LIMITS.MAX;
+
     setVm((prev) => ({
       ...prev,
       inputText: text,
       inputLength: length,
-      isValidLength: length >= 1000 && length <= 10000,
+      isValidLength: isValid,
     }));
   }, []);
 
-  // Submit generation request
+  /**
+   * Submits generation request
+   */
   const submit = useCallback(async () => {
-    if (!vm.isValidLength) return;
+    // Validate input
+    const validation = aiGenerationInputSchema.safeParse({
+      input_text: vm.inputText,
+    });
+
+    if (!validation.success) {
+      setVm((prev) => ({
+        ...prev,
+        error: validation.error.errors[0]?.message || "Validation failed",
+      }));
+      return;
+    }
 
     setVm((prev) => ({
       ...prev,
@@ -201,34 +184,19 @@ export function useAIGeneration() {
     }));
 
     try {
-      const response = await fetch("/api/flashcards/ai-generation", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          input_text: vm.inputText,
-        }),
+      const response = await service.initiateGeneration({
+        input_text: vm.inputText,
       });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.error || errorData.details?.[0] || "Failed to initiate generation"
-        );
-      }
-
-      const data: AIGenerationResponseDTO = await response.json();
 
       setVm((prev) => ({
         ...prev,
         isSubmitting: false,
-        generationId: data.generation_id,
+        generationId: response.generation_id,
         status: "processing",
       }));
 
-      // Start polling for status
-      startPolling(data.generation_id);
+      // Start polling
+      startPolling();
     } catch (error) {
       setVm((prev) => ({
         ...prev,
@@ -237,197 +205,78 @@ export function useAIGeneration() {
         error: error instanceof Error ? error.message : "Unknown error occurred",
       }));
     }
-  }, [vm.isValidLength, vm.inputText, startPolling]);
+  }, [vm.inputText, service, startPolling]);
 
-  // Refresh status manually
+  /**
+   * Manually refreshes generation data
+   */
   const refresh = useCallback(async () => {
     if (!vm.generationId) return;
+    await fetchAndUpdateData(vm.generationId);
+  }, [vm.generationId, fetchAndUpdateData]);
 
-    const data = await fetchGenerationData(vm.generationId);
+  /**
+   * Saves edited proposal
+   */
+  const handleSaveEdit = useCallback(
+    async (id: number, data: { front: string; back: string }) => {
+      const proposal = getProposal(id);
+      if (!proposal || proposal.validationErrors) return;
 
-    setVm((prev) => ({
-      ...prev,
-      status: data.status,
-      aiLog: data.aiLog,
-      generationMeta: data.generationMeta,
-      proposals:
-        data.proposals?.map((p) => ({
-          ...p,
-          isEditing: false,
-          editFront: p.front,
-          editBack: p.back,
-        })) || prev.proposals,
-    }));
-  }, [vm.generationId, fetchGenerationData]);
-
-  // Accept proposal (no-op, just for UI feedback)
-  const accept = useCallback(async (id: number) => {
-    // Accepting without editing is a no-op in this implementation
-    // The backend will handle status changes when actual edits are made
-    console.log("Accepted proposal:", id);
-  }, []);
-
-  // Start editing a proposal
-  const startEdit = useCallback((id: number) => {
-    setVm((prev) => ({
-      ...prev,
-      proposals: prev.proposals.map((p) =>
-        p.id === id
-          ? {
-              ...p,
-              isEditing: true,
-              editFront: p.front,
-              editBack: p.back,
-              validationErrors: undefined,
-            }
-          : p
-      ),
-    }));
-  }, []);
-
-  // Update edit fields
-  const updateEdit = useCallback(
-    (id: number, data: { front?: string; back?: string }) => {
-      setVm((prev) => ({
-        ...prev,
-        proposals: prev.proposals.map((p) => {
-          if (p.id !== id) return p;
-
-          const editFront = data.front !== undefined ? data.front : p.editFront;
-          const editBack = data.back !== undefined ? data.back : p.editBack;
-
-          // Validate
-          const validationErrors: { front?: string; back?: string } = {};
-          if (editFront.length === 0) {
-            validationErrors.front = "Front is required";
-          } else if (editFront.length > 200) {
-            validationErrors.front = "Front must not exceed 200 characters";
-          }
-          if (editBack.length === 0) {
-            validationErrors.back = "Back is required";
-          } else if (editBack.length > 500) {
-            validationErrors.back = "Back must not exceed 500 characters";
-          }
-
-          return {
-            ...p,
-            editFront,
-            editBack,
-            validationErrors:
-              Object.keys(validationErrors).length > 0 ? validationErrors : undefined,
-          };
-        }),
-      }));
+      try {
+        await saveEdit(id, data);
+        commitEdit(id);
+      } catch (error) {
+        console.error("Error saving edit:", error);
+        setValidationError(id, "Failed to save changes");
+      }
     },
-    []
+    [getProposal, saveEdit, commitEdit, setValidationError]
   );
 
-  // Save edited proposal
-  const saveEdit = useCallback(async (id: number) => {
-    const proposal = vm.proposals.find((p) => p.id === id);
-    if (!proposal || proposal.validationErrors) return;
+  /**
+   * Deletes a proposal
+   */
+  const handleDelete = useCallback(
+    async (id: number) => {
+      const confirmed = window.confirm(
+        "Are you sure you want to delete this flashcard? This action cannot be undone."
+      );
+      if (!confirmed) return;
 
-    try {
-      const response = await fetch(`/api/flashcards/${id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          front: proposal.editFront,
-          back: proposal.editBack,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to update flashcard");
+      try {
+        await deleteProposal(id);
+        removeProposal(id);
+      } catch (error) {
+        console.error("Error deleting flashcard:", error);
+        alert("Failed to delete flashcard. Please try again.");
       }
+    },
+    [deleteProposal, removeProposal]
+  );
 
-      // Update local state
-      setVm((prev) => ({
-        ...prev,
-        proposals: prev.proposals.map((p) =>
-          p.id === id
-            ? {
-                ...p,
-                front: p.editFront,
-                back: p.editBack,
-                isEditing: false,
-                flashcard_type: "ai-edited",
-              }
-            : p
-        ),
-      }));
-    } catch (error) {
-      console.error("Error saving edit:", error);
-      setVm((prev) => ({
-        ...prev,
-        proposals: prev.proposals.map((p) =>
-          p.id === id
-            ? {
-                ...p,
-                validationErrors: {
-                  ...p.validationErrors,
-                  front: "Failed to save changes",
-                },
-              }
-            : p
-        ),
-      }));
-    }
-  }, [vm.proposals]);
-
-  // Cancel editing
-  const cancelEdit = useCallback((id: number) => {
-    setVm((prev) => ({
-      ...prev,
-      proposals: prev.proposals.map((p) =>
-        p.id === id
-          ? {
-              ...p,
-              isEditing: false,
-              editFront: p.front,
-              editBack: p.back,
-              validationErrors: undefined,
-            }
-          : p
-      ),
-    }));
-  }, []);
-
-  // Delete proposal
-  const remove = useCallback(async (id: number) => {
-    try {
-      const response = await fetch(`/api/flashcards/${id}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to delete flashcard");
-      }
-
-      // Remove from local state
-      setVm((prev) => ({
-        ...prev,
-        proposals: prev.proposals.filter((p) => p.id !== id),
-      }));
-    } catch (error) {
-      console.error("Error deleting flashcard:", error);
-      alert("Failed to delete flashcard. Please try again.");
-    }
-  }, []);
+  /**
+   * Combined view model for component consumption
+   */
+  const viewModel = useMemo(
+    () => ({
+      ...vm,
+      proposals,
+    }),
+    [vm, proposals]
+  );
 
   return {
-    vm,
+    vm: viewModel,
     setInputText,
     submit,
     refresh,
     accept,
     startEdit,
     updateEdit,
-    saveEdit,
+    saveEdit: handleSaveEdit,
     cancelEdit,
-    remove,
+    remove: handleDelete,
   };
 }
 
