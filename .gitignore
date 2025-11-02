@@ -24,3 +24,7 @@ dist/
 coverage/
 build/
 tmp/
+
+# ignore tests results
+playwright-report/
+test-results/
