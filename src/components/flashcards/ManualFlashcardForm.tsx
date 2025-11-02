@@ -19,6 +19,7 @@ interface ManualFlashcardFormErrors {
 }
 
 interface TextareaFieldProps {
+  dataTestId?: string;
   id: string;
   label: string;
   value: string;
@@ -93,12 +94,13 @@ function TextareaField({
   placeholder,
   error,
   disabled,
+  dataTestId,
 }: TextareaFieldProps) {
   const errorId = `${id}-error`;
   const hasError = !!error;
   
   return (
-    <div className="space-y-2">
+    <div className="space-y-2" data-test-id={dataTestId}>
       <div className="flex items-center justify-between">
         <Label htmlFor={id}>{label}</Label>
         <CharacterCounter current={value.length} max={maxLength} />
@@ -265,7 +267,7 @@ export function ManualFlashcardForm() {
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Success Message */}
       {apiSuccessMessage && (
-        <div className="space-y-4">
+        <div className="space-y-4" data-test-id="success-message-section">
           <FormAlert type="success" message={apiSuccessMessage} />
           {createdFlashcard && (
             <div className="flex gap-2">
@@ -294,7 +296,7 @@ export function ManualFlashcardForm() {
 
       {/* Front Field */}
       <TextareaField
-        id="front"
+        id="front" dataTestId="textarea-front"
         label="Question (Front)"
         value={values.front}
         onChange={(value) => handleFieldChange("front", value)}
@@ -306,7 +308,7 @@ export function ManualFlashcardForm() {
 
       {/* Back Field */}
       <TextareaField
-        id="back"
+        id="back" dataTestId="textarea-back"
         label="Answer (Back)"
         value={values.back}
         onChange={(value) => handleFieldChange("back", value)}
@@ -317,7 +319,7 @@ export function ManualFlashcardForm() {
       />
 
       {/* Submit Button */}
-      <Button type="submit" disabled={!isValid || isSubmitting} className="w-full">
+      <Button type="submit" data-test-id="submit-button" disabled={!isValid || isSubmitting} className="w-full">
         {isSubmitting ? "Creating..." : "Create Flashcard"}
       </Button>
     </form>

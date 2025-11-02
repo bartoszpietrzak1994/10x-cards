@@ -61,6 +61,51 @@
 - **`npm run lint`**: Runs ESLint to check for errors.
 - **`npm run lint:fix`**: Automatically fixes ESLint issues.
 - **`npm run format`**: Formats the codebase using Prettier.
+- **`npm run test`**: Runs unit tests with Vitest.
+- **`npm run test:e2e`**: Runs end-to-end tests with Playwright.
+- **`npm run test:e2e:ui`**: Opens Playwright UI for interactive test debugging.
+
+## Testing
+
+### Unit Tests (Vitest)
+Run unit tests with:
+```bash
+npm run test
+```
+
+### E2E Tests (Playwright)
+
+#### Setup
+1. Create a `.env.test` file with test user credentials:
+   ```bash
+   E2E_USERNAME=your-test-user@example.com
+   E2E_PASSWORD=your-test-password
+   ```
+   **Note:** Make sure this test user exists in your Supabase database.
+
+2. Ensure the development server is running:
+   ```bash
+   npm run dev
+   ```
+
+#### Running Tests
+Run all E2E tests:
+```bash
+npm run test:e2e
+```
+
+Run tests in UI mode for debugging:
+```bash
+npm run test:e2e:ui
+```
+
+Run specific test file:
+```bash
+npx playwright test manual-flashcard-creation.spec.ts
+```
+
+#### Test Coverage
+- **US-004: Manual Flashcard Creation** - Tests the complete flow of authenticated users creating flashcards manually, including form validation and success notifications.
 
 ## Project Scope
 - **AI-Powered Flashcard Generation:**
