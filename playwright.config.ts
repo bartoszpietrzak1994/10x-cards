@@ -1,8 +1,12 @@
 import { defineConfig, devices } from "@playwright/test";
-import dotenv from "dotenv";
 
-dotenv.config({ path: ".env.test" });
-
+/**
+ * Playwright configuration that works with both local testing and GitHub Actions.
+ * Environment variables should be set externally:
+ * - Local: Load via dotenv CLI (e.g., `dotenv -e .env.test -- npx playwright test`)
+ *   or source the env file before running tests
+ * - GitHub Actions: Set environment variables directly in the workflow
+ */
 export default defineConfig({
   // Directory where your test files are located.
   testDir: "./tests",
@@ -23,8 +27,8 @@ export default defineConfig({
 
   // Shared settings for all tests.
   use: {
-    // Replace with your actual base URL once your dev server is running.
-    baseURL: "http://localhost:3000",
+    // Base URL is configurable via PLAYWRIGHT_BASE_URL environment variable
+    baseURL: process.env.PLAYWRIGHT_BASE_URL || "http://localhost:3000",
     // Enable trace on first retry for easier debugging.
     trace: "on-first-retry",
   },

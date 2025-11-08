@@ -25,7 +25,7 @@ test.describe("US-004: Manual Flashcard Creation", () => {
     const testPassword = process.env.E2E_PASSWORD;
 
     if (!testEmail || !testPassword) {
-      throw new Error("E2E_USERNAME and E2E_PASSWORD must be set in .env.test file");
+      throw new Error("E2E_USERNAME and E2E_PASSWORD must be set");
     }
 
     const flashcardData = {
@@ -85,7 +85,7 @@ test.describe("US-004: Manual Flashcard Creation", () => {
     const testPassword = process.env.E2E_PASSWORD;
 
     if (!testEmail || !testPassword) {
-      throw new Error("E2E_USERNAME and E2E_PASSWORD must be set in .env.test file");
+      throw new Error("E2E_USERNAME and E2E_PASSWORD must be set");
     }
 
     await loginPage.goto();
@@ -132,7 +132,7 @@ test.describe("US-004: Manual Flashcard Creation", () => {
     const testPassword = process.env.E2E_PASSWORD;
 
     if (!testEmail || !testPassword) {
-      throw new Error("E2E_USERNAME and E2E_PASSWORD must be set in .env.test file");
+      throw new Error("E2E_USERNAME and E2E_PASSWORD must be set");
     }
 
     await loginPage.goto();
