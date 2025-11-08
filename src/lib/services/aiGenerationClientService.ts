@@ -1,10 +1,5 @@
 import type { SupabaseClient } from "@/db/supabase.client";
-import type {
-  AIGenerationResponseDTO,
-  AILogDTO,
-  FlashcardProposal,
-  InitiateAIGenerationCommand,
-} from "@/types";
+import type { AIGenerationResponseDTO, AILogDTO, FlashcardProposal, InitiateAIGenerationCommand } from "@/types";
 
 /**
  * Client-side service for AI generation operations
@@ -27,9 +22,7 @@ export class AIGenerationClientService {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(
-        errorData.error || errorData.details?.[0] || "Failed to initiate generation"
-      );
+      throw new Error(errorData.error || errorData.details?.[0] || "Failed to initiate generation");
     }
 
     return await response.json();
@@ -46,6 +39,7 @@ export class AIGenerationClientService {
       .single();
 
     if (error) {
+      // eslint-disable-next-line no-console
       console.error("Error fetching generation data:", error);
       return null;
     }
@@ -64,6 +58,7 @@ export class AIGenerationClientService {
       .single();
 
     if (error) {
+      // eslint-disable-next-line no-console
       console.error("Error fetching AI log:", error);
       return null;
     }
@@ -83,6 +78,7 @@ export class AIGenerationClientService {
       .order("created_at", { ascending: true });
 
     if (error) {
+      // eslint-disable-next-line no-console
       console.error("Error fetching proposals:", error);
       return [];
     }
@@ -153,4 +149,3 @@ export class AIGenerationClientService {
 export function createAIGenerationClientService(supabase: SupabaseClient): AIGenerationClientService {
   return new AIGenerationClientService(supabase);
 }
-

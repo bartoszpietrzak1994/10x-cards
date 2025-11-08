@@ -7,11 +7,7 @@ interface UseCharCountReturn {
   error?: string;
 }
 
-export function useCharCount(
-  value: string,
-  min = 1000,
-  max = 10000
-): UseCharCountReturn {
+export function useCharCount(value: string, min = 1000, max = 10000): UseCharCountReturn {
   return useMemo(() => {
     const count = value.length;
     const isValid = count >= min && count <= max;
@@ -34,4 +30,3 @@ export function useCharCount(
     };
   }, [value, min, max]);
 }
-

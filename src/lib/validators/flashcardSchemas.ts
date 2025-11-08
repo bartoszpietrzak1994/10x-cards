@@ -56,12 +56,14 @@ export const createManualFlashcardSchema = z.object({
 /**
  * Schema for updating a flashcard (front and/or back)
  */
-export const updateFlashcardSchema = z.object({
-  front: flashcardFrontSchema.optional(),
-  back: flashcardBackSchema.optional(),
-}).refine((data) => data.front !== undefined || data.back !== undefined, {
-  message: "At least one field (front or back) must be provided",
-});
+export const updateFlashcardSchema = z
+  .object({
+    front: flashcardFrontSchema.optional(),
+    back: flashcardBackSchema.optional(),
+  })
+  .refine((data) => data.front !== undefined || data.back !== undefined, {
+    message: "At least one field (front or back) must be provided",
+  });
 
 /**
  * Schema for AI generation input text
@@ -97,10 +99,7 @@ export type EditFlashcardProposalInput = z.infer<typeof editFlashcardProposalSch
 /**
  * Validation helper for field-level validation
  */
-export function validateFlashcardField(
-  field: "front" | "back",
-  value: string
-): { isValid: boolean; error?: string } {
+export function validateFlashcardField(field: "front" | "back", value: string): { isValid: boolean; error?: string } {
   const schema = field === "front" ? flashcardFrontSchema : flashcardBackSchema;
   const result = schema.safeParse(value);
 
@@ -113,4 +112,3 @@ export function validateFlashcardField(
     error: result.error.errors[0]?.message || "Validation failed",
   };
 }
-

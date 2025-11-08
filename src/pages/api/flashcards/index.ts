@@ -101,6 +101,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     );
   } catch (error) {
     // Global error handler
+    // eslint-disable-next-line no-console
     console.error("Unexpected error in create flashcard endpoint:", error);
 
     // Handle FlashcardServiceError with specific error codes

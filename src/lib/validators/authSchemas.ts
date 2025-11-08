@@ -89,6 +89,7 @@ export function validateAuthField(
   value: string,
   additionalContext?: { password?: string }
 ): { isValid: boolean; error?: string } {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let schema: z.ZodString | z.ZodEffects<z.ZodObject<any>>;
 
   switch (field) {
@@ -98,7 +99,7 @@ export function validateAuthField(
     case "password":
       schema = passwordSchema;
       break;
-    case "confirmPassword":
+    case "confirmPassword": {
       if (!additionalContext?.password) {
         return { isValid: false, error: "Password is required for confirmation validation" };
       }
@@ -127,6 +128,7 @@ export function validateAuthField(
         isValid: false,
         error: error?.message || "Validation failed",
       };
+    }
     default:
       return { isValid: false, error: "Unknown field" };
   }
@@ -142,4 +144,3 @@ export function validateAuthField(
     error: result.error.errors[0]?.message || "Validation failed",
   };
 }
-

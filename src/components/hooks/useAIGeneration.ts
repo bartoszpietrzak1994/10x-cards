@@ -48,12 +48,12 @@ const INPUT_LIMITS = {
 
 /**
  * Refactored AI Generation hook
- * 
+ *
  * This is an orchestrator hook that composes smaller, focused hooks:
  * - usePolling: Handles periodic data fetching
  * - useProposalEditing: Manages edit state and validation
  * - useProposalActions: Handles API calls for proposals
- * 
+ *
  * Benefits of this approach:
  * - Better separation of concerns
  * - Easier to test individual hooks
@@ -62,10 +62,7 @@ const INPUT_LIMITS = {
  */
 export function useAIGeneration() {
   // Service instance
-  const service = useMemo(
-    () => createAIGenerationClientService(supabaseClient),
-    []
-  );
+  const service = useMemo(() => createAIGenerationClientService(supabaseClient), []);
 
   // Main state
   const [vm, setVm] = useState<AIGenerationVM>({
@@ -226,8 +223,7 @@ export function useAIGeneration() {
       try {
         await saveEdit(id, data);
         commitEdit(id);
-      } catch (error) {
-        console.error("Error saving edit:", error);
+      } catch {
         setValidationError(id, "Failed to save changes");
       }
     },
@@ -239,16 +235,13 @@ export function useAIGeneration() {
    */
   const handleDelete = useCallback(
     async (id: number) => {
-      const confirmed = window.confirm(
-        "Are you sure you want to delete this flashcard? This action cannot be undone."
-      );
+      const confirmed = window.confirm("Are you sure you want to delete this flashcard? This action cannot be undone.");
       if (!confirmed) return;
 
       try {
         await deleteProposal(id);
         removeProposal(id);
-      } catch (error) {
-        console.error("Error deleting flashcard:", error);
+      } catch {
         alert("Failed to delete flashcard. Please try again.");
       }
     },
@@ -279,4 +272,3 @@ export function useAIGeneration() {
     remove: handleDelete,
   };
 }
-

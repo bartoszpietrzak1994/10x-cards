@@ -96,6 +96,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       .single();
 
     if (generationError || !generationData) {
+      // eslint-disable-next-line no-console
       console.error("Failed to insert AI generation record:", generationError);
       return new Response(
         JSON.stringify({
@@ -121,6 +122,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     });
 
     if (logError) {
+      // eslint-disable-next-line no-console
       console.error("Failed to insert AI log record:", logError);
       // Continue despite log error - generation record is created
     }
@@ -130,6 +132,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     // In production, this would queue a background job
     // Use service client to bypass RLS for AI-generated flashcards
     initiateAIGeneration(supabaseServiceClient, generationId, input_text, userId).catch((error) => {
+      // eslint-disable-next-line no-console
       console.error("Failed to initiate AI generation:", error);
       // Error is logged but doesn't affect the response
       // The generation record is already created
@@ -148,6 +151,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     });
   } catch (error) {
     // Global error handler
+    // eslint-disable-next-line no-console
     console.error("Unexpected error in AI generation endpoint:", error);
 
     return new Response(

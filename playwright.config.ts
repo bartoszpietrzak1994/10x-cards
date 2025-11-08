@@ -1,11 +1,11 @@
-import { defineConfig, devices } from '@playwright/test';
-import dotenv from 'dotenv';
+import { defineConfig, devices } from "@playwright/test";
+import dotenv from "dotenv";
 
-dotenv.config({ path: '.env.test' });
+dotenv.config({ path: ".env.test" });
 
 export default defineConfig({
   // Directory where your test files are located.
-  testDir: './tests',
+  testDir: "./tests",
 
   // Maximum time one test can run for.
   timeout: 30000,
@@ -19,21 +19,21 @@ export default defineConfig({
   fullyParallel: true,
 
   // Reporter configuration (HTML reporter will output reports after tests complete).
-  reporter: 'html',
+  reporter: "html",
 
   // Shared settings for all tests.
   use: {
     // Replace with your actual base URL once your dev server is running.
-    baseURL: 'http://localhost:3000',
+    baseURL: "http://localhost:3000",
     // Enable trace on first retry for easier debugging.
-    trace: 'on-first-retry',
+    trace: "on-first-retry",
   },
 
   // Configure projects for different browsers.
   projects: [
     {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      name: "chromium",
+      use: { ...devices["Desktop Chrome"] },
     },
   ],
 });

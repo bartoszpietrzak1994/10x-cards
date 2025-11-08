@@ -17,8 +17,7 @@ export function RecoverPasswordForm() {
   const validateField = (name: string, value: string): string | undefined => {
     if (name === "email") {
       if (!value) return "Email address is required";
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value))
-        return "Invalid email address format";
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return "Invalid email address format";
     }
     return undefined;
   };
@@ -49,8 +48,6 @@ export function RecoverPasswordForm() {
         body: JSON.stringify({ email }),
       });
 
-      const data = await response.json();
-
       // Always show success message for security reasons
       if (response.ok) {
         setSuccessMessage(
@@ -63,8 +60,7 @@ export function RecoverPasswordForm() {
           "If the provided email address exists in our system, we will send password reset instructions to it."
         );
       }
-    } catch (error) {
-      console.error("Password recovery error:", error);
+    } catch {
       // Show success message even on network error for security
       setSuccessMessage(
         "If the provided email address exists in our system, we will send password reset instructions to it."

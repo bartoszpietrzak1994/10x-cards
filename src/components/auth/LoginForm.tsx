@@ -20,8 +20,7 @@ export function LoginForm() {
     switch (name) {
       case "email":
         if (!value) return "Email address is required";
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value))
-          return "Invalid email address format";
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return "Invalid email address format";
         return undefined;
       case "password":
         if (!value) return "Password is required";
@@ -62,15 +61,11 @@ export function LoginForm() {
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
         if (response.status === 401) {
           setGeneralError("Invalid email or password.");
         } else if (response.status === 403) {
-          setGeneralError(
-            "Your account has not been confirmed yet. Please check your email inbox."
-          );
+          setGeneralError("Your account has not been confirmed yet. Please check your email inbox.");
         } else if (response.status === 400) {
           setGeneralError("The data is invalid. Please check the form and try again.");
         } else {
@@ -83,8 +78,7 @@ export function LoginForm() {
       const urlParams = new URLSearchParams(window.location.search);
       const redirect = urlParams.get("redirect") || "/";
       window.location.href = redirect;
-    } catch (error) {
-      console.error("Login error:", error);
+    } catch {
       setGeneralError("A network error occurred. Please try again later.");
     } finally {
       setIsLoading(false);
@@ -122,10 +116,7 @@ export function LoginForm() {
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <Label htmlFor="password">Password</Label>
-          <a
-            href="/auth/recover-password"
-            className="text-sm text-primary hover:underline"
-          >
+          <a href="/auth/recover-password" className="text-sm text-primary hover:underline">
             Forgot password?
           </a>
         </div>
@@ -152,7 +143,7 @@ export function LoginForm() {
       </Button>
 
       <p className="text-center text-sm text-muted-foreground">
-        Don't have an account?{" "}
+        Don&apos;t have an account?{" "}
         <a href="/auth/register" className="text-primary hover:underline">
           Sign up
         </a>

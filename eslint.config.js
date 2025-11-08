@@ -58,6 +58,9 @@ const reactConfig = tseslint.config({
 
 export default tseslint.config(
   includeIgnoreFile(gitignorePath),
+  {
+    ignores: ["src/layouts/Layout.astro"],
+  },
   baseConfig,
   jsxA11yConfig,
   reactConfig,

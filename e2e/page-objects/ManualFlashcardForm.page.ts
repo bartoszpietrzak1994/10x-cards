@@ -1,4 +1,4 @@
-import type { Page, Locator } from '@playwright/test';
+import type { Page, Locator } from "@playwright/test";
 
 export class ManualFlashcardFormPage {
   readonly page: Page;
@@ -10,8 +10,8 @@ export class ManualFlashcardFormPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.frontTextarea = page.locator('#front');
-    this.backTextarea = page.locator('#back');
+    this.frontTextarea = page.locator("#front");
+    this.backTextarea = page.locator("#back");
     this.submitButton = page.locator('[data-test-id="submit-button"]');
     this.successMessage = page.locator('[data-test-id="success-message-section"]');
     this.errorMessage = page.locator('[role="alert"]').filter({ hasText: /error|failed/i });
@@ -42,7 +42,7 @@ export class ManualFlashcardFormPage {
   }
 
   async waitForSuccessMessage() {
-    await this.successMessage.waitFor({ state: 'visible' });
+    await this.successMessage.waitFor({ state: "visible" });
   }
 
   async getSuccessMessageText() {
@@ -54,11 +54,10 @@ export class ManualFlashcardFormPage {
   }
 
   async clickCreateAnother() {
-    await this.page.getByRole('button', { name: /create another/i }).click();
+    await this.page.getByRole("button", { name: /create another/i }).click();
   }
 
   async clickGoToHome() {
-    await this.page.getByRole('button', { name: /go to home/i }).click();
+    await this.page.getByRole("button", { name: /go to home/i }).click();
   }
 }
-

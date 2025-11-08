@@ -1,4 +1,4 @@
-import type { Page, Locator } from '@playwright/test';
+import type { Page, Locator } from "@playwright/test";
 
 export class LoginPage {
   readonly page: Page;
@@ -9,14 +9,14 @@ export class LoginPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.emailInput = page.locator('#email');
-    this.passwordInput = page.locator('#password');
+    this.emailInput = page.locator("#email");
+    this.passwordInput = page.locator("#password");
     this.submitButton = page.locator('form button[type="submit"]');
     this.errorAlert = page.locator('[role="alert"]');
   }
 
   async goto() {
-    await this.page.goto('/auth/login');
+    await this.page.goto("/auth/login");
   }
 
   async login(email: string, password: string) {
@@ -37,4 +37,3 @@ export class LoginPage {
     return await this.errorAlert.textContent();
   }
 }
-

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   registerUser,
@@ -9,12 +10,7 @@ import {
   AuthServiceError,
 } from "./authService";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type {
-  RegisterUserCommand,
-  LoginUserCommand,
-  RecoverPasswordCommand,
-  ResetPasswordCommand,
-} from "@/types";
+import type { RegisterUserCommand, LoginUserCommand, RecoverPasswordCommand, ResetPasswordCommand } from "@/types";
 
 // Mock Supabase client
 const createMockSupabaseClient = () => {
@@ -66,8 +62,7 @@ describe("AuthService", () => {
 
       // Assert
       expect(result).toEqual({
-        message:
-          "Registration successful. Please check your email to confirm your account.",
+        message: "Registration successful. Please check your email to confirm your account.",
         user: {
           id: mockUser.id,
           email: mockUser.email,
@@ -94,11 +89,8 @@ describe("AuthService", () => {
       });
 
       // Act & Assert
-      await expect(registerUser(mockSupabase, validCommand)).rejects.toThrow(
-        AuthServiceError
-      );
-      await expect(registerUser(mockSupabase, validCommand))
-        .rejects.toHaveProperty("code", "USER_ALREADY_EXISTS");
+      await expect(registerUser(mockSupabase, validCommand)).rejects.toThrow(AuthServiceError);
+      await expect(registerUser(mockSupabase, validCommand)).rejects.toHaveProperty("code", "USER_ALREADY_EXISTS");
     });
 
     it("should throw AuthServiceError with WEAK_PASSWORD code when password is weak", async () => {
@@ -113,11 +105,8 @@ describe("AuthService", () => {
       });
 
       // Act & Assert
-      await expect(registerUser(mockSupabase, validCommand)).rejects.toThrow(
-        AuthServiceError
-      );
-      await expect(registerUser(mockSupabase, validCommand))
-        .rejects.toHaveProperty("code", "WEAK_PASSWORD");
+      await expect(registerUser(mockSupabase, validCommand)).rejects.toThrow(AuthServiceError);
+      await expect(registerUser(mockSupabase, validCommand)).rejects.toHaveProperty("code", "WEAK_PASSWORD");
     });
 
     it("should throw AuthServiceError with AUTH_ERROR code for generic auth errors", async () => {
@@ -132,11 +121,8 @@ describe("AuthService", () => {
       });
 
       // Act & Assert
-      await expect(registerUser(mockSupabase, validCommand)).rejects.toThrow(
-        AuthServiceError
-      );
-      await expect(registerUser(mockSupabase, validCommand))
-        .rejects.toHaveProperty("code", "AUTH_ERROR");
+      await expect(registerUser(mockSupabase, validCommand)).rejects.toThrow(AuthServiceError);
+      await expect(registerUser(mockSupabase, validCommand)).rejects.toHaveProperty("code", "AUTH_ERROR");
     });
 
     it("should throw AuthServiceError when user data is not returned", async () => {
@@ -147,25 +133,17 @@ describe("AuthService", () => {
       });
 
       // Act & Assert
-      await expect(registerUser(mockSupabase, validCommand)).rejects.toThrow(
-        AuthServiceError
-      );
-      await expect(registerUser(mockSupabase, validCommand))
-        .rejects.toHaveProperty("code", "AUTH_ERROR");
+      await expect(registerUser(mockSupabase, validCommand)).rejects.toThrow(AuthServiceError);
+      await expect(registerUser(mockSupabase, validCommand)).rejects.toHaveProperty("code", "AUTH_ERROR");
     });
 
     it("should wrap unexpected errors in AuthServiceError", async () => {
       // Arrange
-      vi.spyOn(mockSupabase.auth, "signUp").mockRejectedValue(
-        new Error("Unexpected error")
-      );
+      vi.spyOn(mockSupabase.auth, "signUp").mockRejectedValue(new Error("Unexpected error"));
 
       // Act & Assert
-      await expect(registerUser(mockSupabase, validCommand)).rejects.toThrow(
-        AuthServiceError
-      );
-      await expect(registerUser(mockSupabase, validCommand))
-        .rejects.toHaveProperty("code", "AUTH_ERROR");
+      await expect(registerUser(mockSupabase, validCommand)).rejects.toThrow(AuthServiceError);
+      await expect(registerUser(mockSupabase, validCommand)).rejects.toHaveProperty("code", "AUTH_ERROR");
     });
   });
 
@@ -250,11 +228,8 @@ describe("AuthService", () => {
       });
 
       // Act & Assert
-      await expect(loginUser(mockSupabase, validCommand)).rejects.toThrow(
-        AuthServiceError
-      );
-      await expect(loginUser(mockSupabase, validCommand))
-        .rejects.toHaveProperty("code", "EMAIL_NOT_CONFIRMED");
+      await expect(loginUser(mockSupabase, validCommand)).rejects.toThrow(AuthServiceError);
+      await expect(loginUser(mockSupabase, validCommand)).rejects.toHaveProperty("code", "EMAIL_NOT_CONFIRMED");
     });
 
     it("should throw AuthServiceError with INVALID_CREDENTIALS code for invalid credentials", async () => {
@@ -269,11 +244,8 @@ describe("AuthService", () => {
       });
 
       // Act & Assert
-      await expect(loginUser(mockSupabase, validCommand)).rejects.toThrow(
-        AuthServiceError
-      );
-      await expect(loginUser(mockSupabase, validCommand))
-        .rejects.toHaveProperty("code", "INVALID_CREDENTIALS");
+      await expect(loginUser(mockSupabase, validCommand)).rejects.toThrow(AuthServiceError);
+      await expect(loginUser(mockSupabase, validCommand)).rejects.toHaveProperty("code", "INVALID_CREDENTIALS");
     });
 
     it("should throw AuthServiceError when session is not returned", async () => {
@@ -284,25 +256,17 @@ describe("AuthService", () => {
       });
 
       // Act & Assert
-      await expect(loginUser(mockSupabase, validCommand)).rejects.toThrow(
-        AuthServiceError
-      );
-      await expect(loginUser(mockSupabase, validCommand))
-        .rejects.toHaveProperty("code", "AUTH_ERROR");
+      await expect(loginUser(mockSupabase, validCommand)).rejects.toThrow(AuthServiceError);
+      await expect(loginUser(mockSupabase, validCommand)).rejects.toHaveProperty("code", "AUTH_ERROR");
     });
 
     it("should wrap unexpected errors in AuthServiceError", async () => {
       // Arrange
-      vi.spyOn(mockSupabase.auth, "signInWithPassword").mockRejectedValue(
-        new Error("Network error")
-      );
+      vi.spyOn(mockSupabase.auth, "signInWithPassword").mockRejectedValue(new Error("Network error"));
 
       // Act & Assert
-      await expect(loginUser(mockSupabase, validCommand)).rejects.toThrow(
-        AuthServiceError
-      );
-      await expect(loginUser(mockSupabase, validCommand))
-        .rejects.toHaveProperty("code", "AUTH_ERROR");
+      await expect(loginUser(mockSupabase, validCommand)).rejects.toThrow(AuthServiceError);
+      await expect(loginUser(mockSupabase, validCommand)).rejects.toHaveProperty("code", "AUTH_ERROR");
     });
   });
 
@@ -332,20 +296,16 @@ describe("AuthService", () => {
 
       // Act & Assert
       await expect(logoutUser(mockSupabase)).rejects.toThrow(AuthServiceError);
-      await expect(logoutUser(mockSupabase))
-        .rejects.toHaveProperty("code", "AUTH_ERROR");
+      await expect(logoutUser(mockSupabase)).rejects.toHaveProperty("code", "AUTH_ERROR");
     });
 
     it("should wrap unexpected errors in AuthServiceError", async () => {
       // Arrange
-      vi.spyOn(mockSupabase.auth, "signOut").mockRejectedValue(
-        new Error("Unexpected error")
-      );
+      vi.spyOn(mockSupabase.auth, "signOut").mockRejectedValue(new Error("Unexpected error"));
 
       // Act & Assert
       await expect(logoutUser(mockSupabase)).rejects.toThrow(AuthServiceError);
-      await expect(logoutUser(mockSupabase))
-        .rejects.toHaveProperty("code", "AUTH_ERROR");
+      await expect(logoutUser(mockSupabase)).rejects.toHaveProperty("code", "AUTH_ERROR");
     });
   });
 
@@ -366,12 +326,9 @@ describe("AuthService", () => {
       await recoverPassword(mockSupabase, validCommand);
 
       // Assert
-      expect(mockSupabase.auth.resetPasswordForEmail).toHaveBeenCalledWith(
-        validCommand.email,
-        {
-          redirectTo: validCommand.redirectTo,
-        }
-      );
+      expect(mockSupabase.auth.resetPasswordForEmail).toHaveBeenCalledWith(validCommand.email, {
+        redirectTo: validCommand.redirectTo,
+      });
     });
 
     it("should throw AuthServiceError with EMAIL_SEND_FAILED code when email send fails", async () => {
@@ -386,25 +343,17 @@ describe("AuthService", () => {
       });
 
       // Act & Assert
-      await expect(recoverPassword(mockSupabase, validCommand)).rejects.toThrow(
-        AuthServiceError
-      );
-      await expect(recoverPassword(mockSupabase, validCommand))
-        .rejects.toHaveProperty("code", "EMAIL_SEND_FAILED");
+      await expect(recoverPassword(mockSupabase, validCommand)).rejects.toThrow(AuthServiceError);
+      await expect(recoverPassword(mockSupabase, validCommand)).rejects.toHaveProperty("code", "EMAIL_SEND_FAILED");
     });
 
     it("should wrap unexpected errors in AuthServiceError", async () => {
       // Arrange
-      vi.spyOn(mockSupabase.auth, "resetPasswordForEmail").mockRejectedValue(
-        new Error("Network error")
-      );
+      vi.spyOn(mockSupabase.auth, "resetPasswordForEmail").mockRejectedValue(new Error("Network error"));
 
       // Act & Assert
-      await expect(recoverPassword(mockSupabase, validCommand)).rejects.toThrow(
-        AuthServiceError
-      );
-      await expect(recoverPassword(mockSupabase, validCommand))
-        .rejects.toHaveProperty("code", "AUTH_ERROR");
+      await expect(recoverPassword(mockSupabase, validCommand)).rejects.toThrow(AuthServiceError);
+      await expect(recoverPassword(mockSupabase, validCommand)).rejects.toHaveProperty("code", "AUTH_ERROR");
     });
   });
 
@@ -451,11 +400,8 @@ describe("AuthService", () => {
       });
 
       // Act & Assert
-      await expect(resetPassword(mockSupabase, validCommand)).rejects.toThrow(
-        AuthServiceError
-      );
-      await expect(resetPassword(mockSupabase, validCommand))
-        .rejects.toHaveProperty("code", "TOKEN_EXPIRED");
+      await expect(resetPassword(mockSupabase, validCommand)).rejects.toThrow(AuthServiceError);
+      await expect(resetPassword(mockSupabase, validCommand)).rejects.toHaveProperty("code", "TOKEN_EXPIRED");
     });
 
     it("should throw AuthServiceError with INVALID_TOKEN code when token is invalid", async () => {
@@ -470,11 +416,8 @@ describe("AuthService", () => {
       });
 
       // Act & Assert
-      await expect(resetPassword(mockSupabase, validCommand)).rejects.toThrow(
-        AuthServiceError
-      );
-      await expect(resetPassword(mockSupabase, validCommand))
-        .rejects.toHaveProperty("code", "INVALID_TOKEN");
+      await expect(resetPassword(mockSupabase, validCommand)).rejects.toThrow(AuthServiceError);
+      await expect(resetPassword(mockSupabase, validCommand)).rejects.toHaveProperty("code", "INVALID_TOKEN");
     });
 
     it("should throw AuthServiceError when password update fails", async () => {
@@ -494,25 +437,17 @@ describe("AuthService", () => {
       });
 
       // Act & Assert
-      await expect(resetPassword(mockSupabase, validCommand)).rejects.toThrow(
-        AuthServiceError
-      );
-      await expect(resetPassword(mockSupabase, validCommand))
-        .rejects.toHaveProperty("code", "AUTH_ERROR");
+      await expect(resetPassword(mockSupabase, validCommand)).rejects.toThrow(AuthServiceError);
+      await expect(resetPassword(mockSupabase, validCommand)).rejects.toHaveProperty("code", "AUTH_ERROR");
     });
 
     it("should wrap unexpected errors in AuthServiceError", async () => {
       // Arrange
-      vi.spyOn(mockSupabase.auth, "verifyOtp").mockRejectedValue(
-        new Error("Network error")
-      );
+      vi.spyOn(mockSupabase.auth, "verifyOtp").mockRejectedValue(new Error("Network error"));
 
       // Act & Assert
-      await expect(resetPassword(mockSupabase, validCommand)).rejects.toThrow(
-        AuthServiceError
-      );
-      await expect(resetPassword(mockSupabase, validCommand))
-        .rejects.toHaveProperty("code", "AUTH_ERROR");
+      await expect(resetPassword(mockSupabase, validCommand)).rejects.toThrow(AuthServiceError);
+      await expect(resetPassword(mockSupabase, validCommand)).rejects.toHaveProperty("code", "AUTH_ERROR");
     });
   });
 
@@ -599,11 +534,8 @@ describe("AuthService", () => {
       vi.spyOn(mockSupabase, "from").mockImplementation(mockFrom);
 
       // Act & Assert
-      await expect(getUserFromSession(mockSupabase, userId)).rejects.toThrow(
-        AuthServiceError
-      );
-      await expect(getUserFromSession(mockSupabase, userId))
-        .rejects.toHaveProperty("code", "DATABASE_ERROR");
+      await expect(getUserFromSession(mockSupabase, userId)).rejects.toThrow(AuthServiceError);
+      await expect(getUserFromSession(mockSupabase, userId)).rejects.toHaveProperty("code", "DATABASE_ERROR");
     });
 
     it("should wrap unexpected errors in AuthServiceError", async () => {
@@ -619,11 +551,8 @@ describe("AuthService", () => {
       vi.spyOn(mockSupabase, "from").mockImplementation(mockFrom);
 
       // Act & Assert
-      await expect(getUserFromSession(mockSupabase, userId)).rejects.toThrow(
-        AuthServiceError
-      );
-      await expect(getUserFromSession(mockSupabase, userId))
-        .rejects.toHaveProperty("code", "DATABASE_ERROR");
+      await expect(getUserFromSession(mockSupabase, userId)).rejects.toThrow(AuthServiceError);
+      await expect(getUserFromSession(mockSupabase, userId)).rejects.toHaveProperty("code", "DATABASE_ERROR");
     });
   });
 
@@ -661,4 +590,3 @@ describe("AuthService", () => {
     });
   });
 });
-

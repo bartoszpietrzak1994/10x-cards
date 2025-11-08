@@ -32,11 +32,9 @@ export function UserMenu({ user }: UserMenuProps) {
         // Redirect to login page
         window.location.href = "/auth/login";
       } else {
-        console.error("Logout failed");
         alert("Failed to log out. Please try again.");
       }
-    } catch (error) {
-      console.error("Logout error:", error);
+    } catch {
       alert("An error occurred during logout. Please try again.");
     } finally {
       setIsLoggingOut(false);

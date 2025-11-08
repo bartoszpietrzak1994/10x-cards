@@ -22,13 +22,13 @@ export interface UsePollingOptions<T> {
 
 /**
  * Hook for polling data at regular intervals
- * 
+ *
  * Features:
  * - Automatic cleanup on unmount
  * - Maximum polling time limit
  * - Conditional stopping based on data
  * - Manual control via enabled flag
- * 
+ *
  * @example
  * ```typescript
  * const { start, stop } = usePolling({
@@ -98,8 +98,7 @@ export function usePolling<T>({
           clearPolling();
           onStop?.();
         }
-      } catch (error) {
-        console.error("Polling error:", error);
+      } catch {
         // Continue polling even if there's an error
       }
     };
@@ -131,4 +130,3 @@ export function usePolling<T>({
     stop,
   };
 }
-

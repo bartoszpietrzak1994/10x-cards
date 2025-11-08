@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "../../db/supabase.client";
-import { OpenRouterService, createOpenRouterService } from "./openrouterService";
+import { createOpenRouterService } from "./openrouterService";
 import type { ResponseFormat } from "./openrouter.types";
 
 /**
@@ -38,25 +38,25 @@ const FLASHCARDS_RESPONSE_SCHEMA: ResponseFormat = {
               front: {
                 type: "string",
                 maxLength: 200,
-                description: "The question or prompt side of the flashcard"
+                description: "The question or prompt side of the flashcard",
               },
               back: {
                 type: "string",
                 maxLength: 500,
-                description: "The answer or explanation side of the flashcard"
-              }
+                description: "The answer or explanation side of the flashcard",
+              },
             },
             required: ["front", "back"],
-            additionalProperties: false
+            additionalProperties: false,
           },
           minItems: 1,
-          maxItems: 20
-        }
+          maxItems: 20,
+        },
       },
       required: ["flashcards"],
-      additionalProperties: false
-    }
-  }
+      additionalProperties: false,
+    },
+  },
 };
 
 /**
@@ -125,17 +125,13 @@ ${inputText}
 Generate flashcards that will help someone learn and remember the key information from this text.`;
 
     // Call OpenRouter API with flashcard generation configuration
-    const response = await openRouterService.sendChat(
-      FLASHCARDS_GENERATION_SYSTEM_PROMPT,
-      userMessage,
-      {
-        responseFormat: FLASHCARDS_RESPONSE_SCHEMA,
-        modelParams: {
-          temperature: 0.7,
-          max_tokens: 2000,
-        }
-      }
-    );
+    const response = await openRouterService.sendChat(FLASHCARDS_GENERATION_SYSTEM_PROMPT, userMessage, {
+      responseFormat: FLASHCARDS_RESPONSE_SCHEMA,
+      modelParams: {
+        temperature: 0.7,
+        max_tokens: 2000,
+      },
+    });
 
     // Parse AI response
     const parsedContent = parseAIResponse(response.content);
@@ -150,30 +146,25 @@ Generate flashcards that will help someone learn and remember the key informatio
     const responseTime = endTime.toISOString();
 
     // Process the response and create flashcard proposals
-    await processAIResponse(
-      supabase,
-      generationId,
-      userId,
-      parsedContent.flashcards,
-      {
-        tokenCount: response.usage?.total_tokens || 0,
-        model: response.model || "unknown",
-        responseTime: responseTime,
-        requestTime: startTime.toISOString(),
-      }
-    );
+    await processAIResponse(supabase, generationId, userId, parsedContent.flashcards, {
+      tokenCount: response.usage?.total_tokens || 0,
+      model: response.model || "unknown",
+      responseTime: responseTime,
+      requestTime: startTime.toISOString(),
+    });
 
+    // eslint-disable-next-line no-console
     console.log("AI Generation completed successfully:", {
       generationId,
       flashcardsCount: parsedContent.flashcards.length,
       model: response.model,
       tokenCount: response.usage?.total_tokens,
     });
-
   } catch (error) {
     // Handle errors and update database records
     const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
-    
+
+    // eslint-disable-next-line no-console
     console.error("AI Generation failed:", {
       generationId,
       error: errorMessage,
@@ -238,17 +229,15 @@ async function processAIResponse(
 
   try {
     // Create flashcard proposals in the database
-    const flashcardInserts = flashcards.map(card => ({
+    const flashcardInserts = flashcards.map((card) => ({
       user_id: userId,
       ai_generation_id: generationId,
       front: card.front.trim(),
       back: card.back.trim(),
-      flashcard_type: 'ai-proposal' as const,
+      flashcard_type: "ai-proposal" as const,
     }));
 
-    const { error: flashcardsError } = await supabase
-      .from('flashcards')
-      .insert(flashcardInserts);
+    const { error: flashcardsError } = await supabase.from("flashcards").insert(flashcardInserts);
 
     if (flashcardsError) {
       throw new Error(`Failed to create flashcard proposals: ${flashcardsError.message}`);
@@ -256,14 +245,14 @@ async function processAIResponse(
 
     // Update flashcards_ai_generation record with metadata
     const { error: generationError } = await supabase
-      .from('flashcards_ai_generation')
+      .from("flashcards_ai_generation")
       .update({
         response_time: metadata.responseTime,
         token_count: metadata.tokenCount,
         generated_flashcards_count: flashcards.length,
         model: metadata.model,
       })
-      .eq('id', generationId);
+      .eq("id", generationId);
 
     if (generationError) {
       throw new Error(`Failed to update generation record: ${generationError.message}`);
@@ -271,30 +260,31 @@ async function processAIResponse(
 
     // Update ai_logs record with timing and token information
     const { error: logError } = await supabase
-      .from('ai_logs')
+      .from("ai_logs")
       .update({
         response_time: metadata.responseTime,
         token_count: metadata.tokenCount,
       })
-      .eq('flashcards_generation_id', generationId);
+      .eq("flashcards_generation_id", generationId);
 
     if (logError) {
       throw new Error(`Failed to update ai_logs: ${logError.message}`);
     }
 
+    // eslint-disable-next-line no-console
     console.log("Flashcard proposals created successfully:", {
       generationId,
       flashcardsCount: flashcards.length,
       tokenCount: metadata.tokenCount,
     });
-
   } catch (error) {
     // Log error for debugging
+    // eslint-disable-next-line no-console
     console.error("Failed to process AI response:", {
       generationId,
       error: error instanceof Error ? error.message : "Unknown error",
     });
-    
+
     throw error;
   }
 }
@@ -311,11 +301,12 @@ function parseAIResponse(content: string): AIFlashcardsResponse {
     throw new Error("AI response content is empty");
   }
 
+  // eslint-disable-next-line no-console
   console.log("AI response content:", content);
 
   try {
     const parsed = JSON.parse(content);
-    
+
     // Validate structure
     if (!parsed.flashcards || !Array.isArray(parsed.flashcards)) {
       throw new Error("Invalid response structure: missing flashcards array");
@@ -345,13 +336,14 @@ async function updateGenerationError(
   try {
     // Update ai_logs with error information
     await supabase
-      .from('ai_logs')
+      .from("ai_logs")
       .update({
         error_info: errorMessage,
         response_time: new Date().toISOString(),
       })
-      .eq('flashcards_generation_id', generationId);
+      .eq("flashcards_generation_id", generationId);
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error("Failed to update error in ai_logs:", error);
   }
 }

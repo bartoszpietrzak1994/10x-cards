@@ -14,13 +14,13 @@ const resetPasswordSchema = z.object({
 
 /**
  * POST /api/auth/reset-password
- * 
+ *
  * Resets the user's password using a recovery token.
- * 
+ *
  * Request Body:
  * - token: string (recovery token from email)
  * - password: string (new password, minimum 6 characters)
- * 
+ *
  * Responses:
  * - 200: Password reset successful
  * - 400: Invalid request data or token expired/invalid
@@ -32,7 +32,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     let body;
     try {
       body = await request.json();
-    } catch (error) {
+    } catch {
       return new Response(
         JSON.stringify({
           error: "Invalid JSON in request body",
@@ -80,6 +80,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       }
     );
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error("Unexpected error in POST /api/auth/reset-password:", error);
 
     // Handle AuthServiceError with proper status codes
@@ -131,4 +132,3 @@ export const POST: APIRoute = async ({ request, locals }) => {
     );
   }
 };
-

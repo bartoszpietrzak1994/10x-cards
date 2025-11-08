@@ -22,11 +22,7 @@ interface AIGenerationMetaProps {
   onRefresh?: () => void;
 }
 
-export function AIGenerationMeta({
-  log,
-  generationMeta,
-  onRefresh,
-}: AIGenerationMetaProps) {
+export function AIGenerationMeta({ log, generationMeta, onRefresh }: AIGenerationMetaProps) {
   if (!log && !generationMeta) {
     return null;
   }
@@ -66,12 +62,7 @@ export function AIGenerationMeta({
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg">Generation Details</CardTitle>
           {onRefresh && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onRefresh}
-              aria-label="Refresh generation data"
-            >
+            <Button variant="outline" size="sm" onClick={onRefresh} aria-label="Refresh generation data">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
@@ -96,9 +87,7 @@ export function AIGenerationMeta({
         <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <dt className="text-sm font-medium text-muted-foreground">Request Time</dt>
-            <dd className="mt-1 text-sm">
-              {formatDate(generationMeta?.request_time || log?.request_time || null)}
-            </dd>
+            <dd className="mt-1 text-sm">{formatDate(generationMeta?.request_time || log?.request_time || null)}</dd>
           </div>
 
           {(generationMeta?.response_time || log?.response_time) && (
@@ -119,19 +108,13 @@ export function AIGenerationMeta({
 
           <div>
             <dt className="text-sm font-medium text-muted-foreground">Token Count</dt>
-            <dd className="mt-1 text-sm">
-              {formatNumber(generationMeta?.token_count || log?.token_count || null)}
-            </dd>
+            <dd className="mt-1 text-sm">{formatNumber(generationMeta?.token_count || log?.token_count || null)}</dd>
           </div>
 
           {generationMeta?.generated_flashcards_count !== null && (
             <div>
-              <dt className="text-sm font-medium text-muted-foreground">
-                Generated Flashcards
-              </dt>
-              <dd className="mt-1 text-sm">
-                {formatNumber(generationMeta?.generated_flashcards_count || null)}
-              </dd>
+              <dt className="text-sm font-medium text-muted-foreground">Generated Flashcards</dt>
+              <dd className="mt-1 text-sm">{formatNumber(generationMeta?.generated_flashcards_count || null)}</dd>
             </div>
           )}
 
@@ -145,9 +128,7 @@ export function AIGenerationMeta({
           {log?.error_info && (
             <div className="sm:col-span-2">
               <dt className="text-sm font-medium text-destructive">Error Information</dt>
-              <dd className="mt-1 text-sm text-destructive bg-destructive/10 p-3 rounded-md">
-                {log.error_info}
-              </dd>
+              <dd className="mt-1 text-sm text-destructive bg-destructive/10 p-3 rounded-md">{log.error_info}</dd>
             </div>
           )}
         </dl>
@@ -155,4 +136,3 @@ export function AIGenerationMeta({
     </Card>
   );
 }
-

@@ -25,12 +25,14 @@ if (hasValidParams && tokenHash) {
     });
 
     if (verifyError) {
+      // eslint-disable-next-line no-console
       console.error("Email verification error:", verifyError);
       error = "The confirmation link is invalid or has expired. Please request a new confirmation email.";
     } else {
       isConfirmed = true;
     }
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.error("Unexpected error during email verification:", err);
     error = "An unexpected error occurred during email confirmation. Please try again later.";
   }
@@ -47,39 +49,38 @@ if (hasValidParams && tokenHash) {
       </div>
 
       <div class="rounded-lg border bg-card p-6 shadow-sm space-y-6">
-        {isConfirmed ? (
-          <>
-            <Alert>
-              <AlertTitle>Success!</AlertTitle>
-              <AlertDescription>
-                Your email address has been confirmed. You can now log in to your account.
-              </AlertDescription>
-            </Alert>
+        {
+          isConfirmed ? (
+            <>
+              <Alert>
+                <AlertTitle>Success!</AlertTitle>
+                <AlertDescription>
+                  Your email address has been confirmed. You can now log in to your account.
+                </AlertDescription>
+              </Alert>
 
-            <div class="flex flex-col gap-4">
-              <Button asChild class="w-full">
-                <a href="/auth/login">Sign In</a>
-              </Button>
-            </div>
-          </>
-        ) : (
-          <>
-            <Alert variant="destructive">
-              <AlertTitle>Confirmation Failed</AlertTitle>
-              <AlertDescription>
-                {error}
-              </AlertDescription>
-            </Alert>
+              <div class="flex flex-col gap-4">
+                <Button asChild class="w-full">
+                  <a href="/auth/login">Sign In</a>
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <Alert variant="destructive">
+                <AlertTitle>Confirmation Failed</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
 
-            <div class="flex flex-col gap-4">
-              <Button asChild variant="outline" class="w-full">
-                <a href="/auth/register">Back to Sign Up</a>
-              </Button>
-            </div>
-          </>
-        )}
+              <div class="flex flex-col gap-4">
+                <Button asChild variant="outline" class="w-full">
+                  <a href="/auth/register">Back to Sign Up</a>
+                </Button>
+              </div>
+            </>
+          )
+        }
       </div>
     </div>
   </div>
 </Layout>
-

@@ -3,7 +3,7 @@ import type { AstroGlobal } from "astro";
 /**
  * Checks if the user is authenticated.
  * If not, redirects to the login page with a redirect parameter.
- * 
+ *
  * Usage in .astro pages:
  * ```astro
  * ---
@@ -11,7 +11,7 @@ import type { AstroGlobal } from "astro";
  * requireAuth(Astro);
  * ---
  * ```
- * 
+ *
  * @param Astro - Astro global object
  */
 export function requireAuth(Astro: AstroGlobal): void {
@@ -24,7 +24,7 @@ export function requireAuth(Astro: AstroGlobal): void {
 /**
  * Checks if the user is authenticated (without redirecting).
  * Returns true if authenticated, false otherwise.
- * 
+ *
  * Usage:
  * ```astro
  * ---
@@ -32,7 +32,7 @@ export function requireAuth(Astro: AstroGlobal): void {
  * const isAuthenticated = checkAuth(Astro);
  * ---
  * ```
- * 
+ *
  * @param Astro - Astro global object
  * @returns boolean indicating if user is authenticated
  */
@@ -43,9 +43,9 @@ export function checkAuth(Astro: AstroGlobal): boolean {
 /**
  * Checks if the user is a guest (not authenticated).
  * If user is authenticated, redirects to the home page.
- * 
+ *
  * Useful for login/register pages to prevent authenticated users from accessing them.
- * 
+ *
  * Usage in auth pages (login, register):
  * ```astro
  * ---
@@ -53,7 +53,7 @@ export function checkAuth(Astro: AstroGlobal): boolean {
  * requireGuest(Astro);
  * ---
  * ```
- * 
+ *
  * @param Astro - Astro global object
  */
 export function requireGuest(Astro: AstroGlobal): void {
@@ -65,7 +65,7 @@ export function requireGuest(Astro: AstroGlobal): void {
 /**
  * Gets the authenticated user from Astro.locals.
  * Returns null if not authenticated.
- * 
+ *
  * Usage:
  * ```astro
  * ---
@@ -73,7 +73,7 @@ export function requireGuest(Astro: AstroGlobal): void {
  * const user = getUser(Astro);
  * ---
  * ```
- * 
+ *
  * @param Astro - Astro global object
  * @returns UserDTO or null
  */

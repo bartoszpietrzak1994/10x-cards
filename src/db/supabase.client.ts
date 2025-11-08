@@ -3,8 +3,8 @@ import { createClient, type SupabaseClient as SupabaseClientBase } from "@supaba
 import type { Database } from "./database.types.ts";
 
 const supabaseUrl = "http://127.0.0.1:54321";
-const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0";
-const supabaseServiceKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0";
+const supabaseAnonKey =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0";
 
 /**
  * Client for users (with RLS).
@@ -12,10 +12,10 @@ const supabaseServiceKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXB
  */
 export const supabaseClient = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
-    autoRefreshToken: false,      // Managed by middleware
-    persistSession: false,         // No localStorage
-    detectSessionInUrl: false,     // No URL session detection
-  }
+    autoRefreshToken: false, // Managed by middleware
+    persistSession: false, // No localStorage
+    detectSessionInUrl: false, // No URL session detection
+  },
 });
 
 /**
@@ -26,8 +26,8 @@ export const supabaseClient = createClient<Database>(supabaseUrl, supabaseAnonKe
 export const supabaseServiceClient = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: false,
-    persistSession: false
-  }
+    persistSession: false,
+  },
 });
 
 export type SupabaseClient = SupabaseClientBase<Database>;

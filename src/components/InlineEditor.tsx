@@ -14,14 +14,8 @@ interface InlineEditorProps {
   onCancel: () => void;
 }
 
-export function InlineEditor({
-  value,
-  onChange,
-  errors,
-  onSave,
-  onCancel,
-}: InlineEditorProps) {
-  const isValid = !errors || (Object.keys(errors).length === 0);
+export function InlineEditor({ value, onChange, errors, onSave, onCancel }: InlineEditorProps) {
+  const isValid = !errors || Object.keys(errors).length === 0;
   const frontLength = value.front.length;
   const backLength = value.back.length;
 
@@ -40,10 +34,7 @@ export function InlineEditor({
           aria-describedby="front-helper front-error"
         />
         <div className="flex justify-between items-start gap-2">
-          <p
-            id="front-helper"
-            className="text-xs text-muted-foreground"
-          >
+          <p id="front-helper" className="text-xs text-muted-foreground">
             {frontLength}/200 characters
           </p>
           {errors?.front && (
@@ -67,10 +58,7 @@ export function InlineEditor({
           aria-describedby="back-helper back-error"
         />
         <div className="flex justify-between items-start gap-2">
-          <p
-            id="back-helper"
-            className="text-xs text-muted-foreground"
-          >
+          <p id="back-helper" className="text-xs text-muted-foreground">
             {backLength}/500 characters
           </p>
           {errors?.back && (
@@ -82,22 +70,13 @@ export function InlineEditor({
       </div>
 
       <div className="flex gap-2">
-        <Button
-          onClick={onSave}
-          disabled={!isValid}
-          size="sm"
-        >
+        <Button onClick={onSave} disabled={!isValid} size="sm">
           Save
         </Button>
-        <Button
-          onClick={onCancel}
-          variant="outline"
-          size="sm"
-        >
+        <Button onClick={onCancel} variant="outline" size="sm">
           Cancel
         </Button>
       </div>
     </div>
   );
 }
-

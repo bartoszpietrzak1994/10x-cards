@@ -52,6 +52,7 @@ export async function createManualFlashcard(
 
   // Handle database errors with specific error codes
   if (flashcardError) {
+    // eslint-disable-next-line no-console
     console.error("Database error while creating flashcard:", {
       error: flashcardError,
       userId,
@@ -84,6 +85,7 @@ export async function createManualFlashcard(
 
   // Handle case where no data is returned
   if (!flashcardData) {
+    // eslint-disable-next-line no-console
     console.error("No data returned after flashcard creation");
     throw new FlashcardServiceError("Failed to retrieve created flashcard", "NO_DATA_RETURNED");
   }
@@ -116,6 +118,7 @@ export async function deleteFlashcard(
 ): Promise<{ error?: { code: string; message: string } }> {
   // Validate user authentication.
   if (!userId) {
+    // eslint-disable-next-line no-console
     console.error("deleteFlashcard: Missing user authentication", { flashcardId });
     return { error: { code: "INVALID_USER", message: "User not authenticated" } };
   }
@@ -129,6 +132,7 @@ export async function deleteFlashcard(
     .single();
 
   if (fetchError || !existingFlashcard) {
+    // eslint-disable-next-line no-console
     console.error("deleteFlashcard: Flashcard not found or access unauthorized", {
       flashcardId,
       userId,
@@ -138,13 +142,10 @@ export async function deleteFlashcard(
   }
 
   // Attempt to delete the flashcard.
-  const { error: deleteError } = await supabase
-    .from("flashcards")
-    .delete()
-    .eq("id", flashcardId)
-    .eq("user_id", userId);
+  const { error: deleteError } = await supabase.from("flashcards").delete().eq("id", flashcardId).eq("user_id", userId);
 
   if (deleteError) {
+    // eslint-disable-next-line no-console
     console.error("deleteFlashcard: Failed to delete flashcard", {
       flashcardId,
       userId,
@@ -153,6 +154,7 @@ export async function deleteFlashcard(
     return { error: { code: deleteError.code, message: deleteError.message } };
   }
 
+  // eslint-disable-next-line no-console
   console.info("deleteFlashcard: Flashcard deleted successfully", { flashcardId, userId });
   return {};
 }
@@ -204,6 +206,7 @@ export async function updateFlashcard(
     .single();
 
   if (fetchError) {
+    // eslint-disable-next-line no-console
     console.error("Database error while fetching flashcard:", {
       error: fetchError,
       flashcardId,
@@ -257,6 +260,7 @@ export async function updateFlashcard(
 
   // Handle database errors with specific error codes
   if (updateError) {
+    // eslint-disable-next-line no-console
     console.error("Database error while updating flashcard:", {
       error: updateError,
       flashcardId,
@@ -275,6 +279,7 @@ export async function updateFlashcard(
 
   // Handle case where no data is returned
   if (!flashcardData) {
+    // eslint-disable-next-line no-console
     console.error("No data returned after flashcard update");
     throw new FlashcardServiceError("Failed to retrieve updated flashcard", "NO_DATA_RETURNED");
   }

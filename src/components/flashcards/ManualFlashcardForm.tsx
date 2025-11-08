@@ -62,12 +62,10 @@ const VALIDATION_RULES = {
 
 function CharacterCounter({ current, max }: CharacterCounterProps) {
   const isOverLimit = current > max;
-  
+
   return (
     <span
-      className={`text-xs ${
-        isOverLimit ? "text-destructive font-medium" : "text-muted-foreground"
-      }`}
+      className={`text-xs ${isOverLimit ? "text-destructive font-medium" : "text-muted-foreground"}`}
       aria-live="polite"
     >
       {current} / {max}
@@ -77,7 +75,7 @@ function CharacterCounter({ current, max }: CharacterCounterProps) {
 
 function ValidationMessage({ id, message }: ValidationMessageProps) {
   if (!message) return null;
-  
+
   return (
     <p id={id} className="text-sm text-destructive" role="alert">
       {message}
@@ -98,7 +96,7 @@ function TextareaField({
 }: TextareaFieldProps) {
   const errorId = `${id}-error`;
   const hasError = !!error;
-  
+
   return (
     <div className="space-y-2" data-test-id={dataTestId}>
       <div className="flex items-center justify-between">
@@ -146,19 +144,19 @@ export function ManualFlashcardForm() {
 
   const validateField = (field: keyof ManualFlashcardFormValues, value: string): string | undefined => {
     const rules = VALIDATION_RULES[field];
-    
+
     if (!value || value.trim().length === 0) {
       return `${field === "front" ? "Question" : "Answer"} is required`;
     }
-    
+
     if (value.length < rules.minLength) {
       return `${field === "front" ? "Question" : "Answer"} must be at least ${rules.minLength} character`;
     }
-    
+
     if (value.length > rules.maxLength) {
       return `${field === "front" ? "Question" : "Answer"} must not exceed ${rules.maxLength} characters`;
     }
-    
+
     return undefined;
   };
 
@@ -167,9 +165,9 @@ export function ManualFlashcardForm() {
       front: validateField("front", values.front),
       back: validateField("back", values.back),
     };
-    
+
     setErrors(newErrors);
-    
+
     return !newErrors.front && !newErrors.back;
   };
 
@@ -177,11 +175,11 @@ export function ManualFlashcardForm() {
 
   const handleFieldChange = (field: keyof ManualFlashcardFormValues, value: string) => {
     setValues((prev) => ({ ...prev, [field]: value }));
-    
+
     // Clear success/error messages when user starts editing
     if (apiSuccessMessage) setApiSuccessMessage(null);
     if (apiErrorMessage) setApiErrorMessage(null);
-    
+
     // Validate field on change
     const error = validateField(field, value);
     setErrors((prev) => ({ ...prev, [field]: error }));
@@ -189,11 +187,11 @@ export function ManualFlashcardForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Clear previous messages
     setApiSuccessMessage(null);
     setApiErrorMessage(null);
-    
+
     // Validate form
     if (!validateForm()) {
       // Focus first invalid field (check values to determine which field is invalid)
@@ -201,24 +199,24 @@ export function ManualFlashcardForm() {
       document.getElementById(firstError)?.focus();
       return;
     }
-    
+
     setIsSubmitting(true);
-    
+
     try {
       const command: CreateManualFlashcardCommand = {
         front: values.front.trim(),
         back: values.back.trim(),
         flashcard_type: "manual",
       };
-      
+
       const response = await fetch("/api/flashcards", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(command),
       });
-      
+
       const data = await response.json();
-      
+
       if (!response.ok) {
         // Handle different error types
         if (response.status === 401) {
@@ -240,19 +238,18 @@ export function ManualFlashcardForm() {
         }
         return;
       }
-      
+
       // Success
       setCreatedFlashcard(data.flashcard);
       setApiSuccessMessage(data.message || "Flashcard created successfully!");
-      
+
       // Reset form
       setValues({ front: "", back: "" });
       setErrors({});
-      
+
       // Scroll to top to show success message
       window.scrollTo({ top: 0, behavior: "smooth" });
-    } catch (error) {
-      console.error("Create flashcard error:", error);
+    } catch {
       setApiErrorMessage("A network error occurred. Please check your connection and try again.");
     } finally {
       setIsSubmitting(false);
@@ -296,7 +293,8 @@ export function ManualFlashcardForm() {
 
       {/* Front Field */}
       <TextareaField
-        id="front" dataTestId="textarea-front"
+        id="front"
+        dataTestId="textarea-front"
         label="Question (Front)"
         value={values.front}
         onChange={(value) => handleFieldChange("front", value)}
@@ -308,7 +306,8 @@ export function ManualFlashcardForm() {
 
       {/* Back Field */}
       <TextareaField
-        id="back" dataTestId="textarea-back"
+        id="back"
+        dataTestId="textarea-back"
         label="Answer (Back)"
         value={values.back}
         onChange={(value) => handleFieldChange("back", value)}
@@ -325,4 +324,3 @@ export function ManualFlashcardForm() {
     </form>
   );
 }
-

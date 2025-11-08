@@ -144,6 +144,7 @@ export const PUT: APIRoute = async ({ request, params, locals }) => {
     );
   } catch (error) {
     // Global error handler
+    // eslint-disable-next-line no-console
     console.error("Unexpected error in update flashcard endpoint:", error);
 
     // Handle FlashcardServiceError with specific error codes
@@ -210,11 +211,11 @@ export const PUT: APIRoute = async ({ request, params, locals }) => {
  * @throws 404 Not Found if flashcard doesn't exist or doesn't belong to user
  * @throws 500 Internal Server Error for unexpected errors
  */
-export const DELETE: APIRoute = async ({ params, request, locals }) => {
+export const DELETE: APIRoute = async ({ params, locals }) => {
   // Validate the flashcard ID from the URL parameter.
   const flashcardId = Number(params.id);
   if (isNaN(flashcardId)) {
-    return new Response(JSON.stringify({ message: 'Invalid flashcard id' }), { status: 400 });
+    return new Response(JSON.stringify({ message: "Invalid flashcard id" }), { status: 400 });
   }
 
   // Check authentication
@@ -237,13 +238,13 @@ export const DELETE: APIRoute = async ({ params, request, locals }) => {
     // Attempt to delete the flashcard using the flashcard service.
     const result = await deleteFlashcard(locals.supabase, flashcardId, userId);
     if (result.error) {
-      if (result.error.code === 'not_found') {
-        return new Response(JSON.stringify({ message: 'Flashcard not found or access unauthorized' }), { status: 404 });
+      if (result.error.code === "not_found") {
+        return new Response(JSON.stringify({ message: "Flashcard not found or access unauthorized" }), { status: 404 });
       }
       return new Response(JSON.stringify({ message: result.error.message }), { status: 500 });
     }
-    return new Response(JSON.stringify({ message: 'Flashcard deleted successfully' }), { status: 200 });
-  } catch (error) {
-    return new Response(JSON.stringify({ message: 'Failed to delete flashcard' }), { status: 500 });
+    return new Response(JSON.stringify({ message: "Flashcard deleted successfully" }), { status: 200 });
+  } catch {
+    return new Response(JSON.stringify({ message: "Failed to delete flashcard" }), { status: 500 });
   }
 };

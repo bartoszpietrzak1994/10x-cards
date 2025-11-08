@@ -14,13 +14,13 @@ const loginSchema = z.object({
 
 /**
  * POST /api/auth/login
- * 
+ *
  * Authenticates a user and creates a session.
- * 
+ *
  * Request Body:
  * - email: string (valid email format)
  * - password: string (required)
- * 
+ *
  * Responses:
  * - 200: Login successful, session cookies set
  * - 400: Invalid request data
@@ -34,7 +34,7 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
     let body;
     try {
       body = await request.json();
-    } catch (error) {
+    } catch {
       return new Response(
         JSON.stringify({
           error: "Invalid JSON in request body",
@@ -104,6 +104,7 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
       }
     );
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error("Unexpected error in POST /api/auth/login:", error);
 
     // Handle AuthServiceError with proper status codes

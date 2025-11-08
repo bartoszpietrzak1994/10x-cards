@@ -14,13 +14,13 @@ const registerSchema = z.object({
 
 /**
  * POST /api/auth/register
- * 
+ *
  * Registers a new user in the system.
- * 
+ *
  * Request Body:
  * - email: string (valid email format)
  * - password: string (minimum 6 characters)
- * 
+ *
  * Responses:
  * - 201: Registration successful, confirmation email sent
  * - 400: Invalid request data
@@ -33,7 +33,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     let body;
     try {
       body = await request.json();
-    } catch (error) {
+    } catch {
       return new Response(
         JSON.stringify({
           error: "Invalid JSON in request body",
@@ -71,14 +71,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
       password,
     });
 
-    return new Response(
-      JSON.stringify(result),
-      {
-        status: 201,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+    return new Response(JSON.stringify(result), {
+      status: 201,
+      headers: { "Content-Type": "application/json" },
+    });
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error("Unexpected error in POST /api/auth/register:", error);
 
     // Handle AuthServiceError with proper status codes
@@ -132,4 +130,3 @@ export const POST: APIRoute = async ({ request, locals }) => {
     );
   }
 };
-
