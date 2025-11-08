@@ -27,8 +27,8 @@ export default defineConfig({
 
   // Shared settings for all tests.
   use: {
-    // Base URL is configurable via PLAYWRIGHT_BASE_URL environment variable
-    baseURL: process.env.PLAYWRIGHT_BASE_URL || "http://localhost:3000",
+    // Base URL is configurable via PUBLIC_SUPABASE_URL environment variable
+    baseURL: process.env.PUBLIC_SUPABASE_URL || "http://localhost:3000",
     // Enable trace on first retry for easier debugging.
     trace: "on-first-retry",
   },
