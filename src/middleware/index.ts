@@ -5,28 +5,32 @@ import type { UserDTO } from "../types.ts";
 
 export const onRequest = defineMiddleware(async (context, next) => {
   // Create Supabase server client with cookie handling
-  const supabase = createServerClient<Database>(import.meta.env.SUPABASE_URL, import.meta.env.SUPABASE_KEY, {
-    cookies: {
-      getAll() {
-        // Parse cookies from request headers
-        const cookieHeader = context.request.headers.get("cookie");
-        if (!cookieHeader) return [];
+  const supabase = createServerClient<Database>(
+    import.meta.env.PUBLIC_SUPABASE_URL,
+    import.meta.env.PUBLIC_SUPABASE_ANON_KEY,
+    {
+      cookies: {
+        getAll() {
+          // Parse cookies from request headers
+          const cookieHeader = context.request.headers.get("cookie");
+          if (!cookieHeader) return [];
 
-        return cookieHeader.split(";").map((cookie) => {
-          const [name, ...valueParts] = cookie.trim().split("=");
-          return {
-            name: name.trim(),
-            value: valueParts.join("=").trim(),
-          };
-        });
+          return cookieHeader.split(";").map((cookie) => {
+            const [name, ...valueParts] = cookie.trim().split("=");
+            return {
+              name: name.trim(),
+              value: valueParts.join("=").trim(),
+            };
+          });
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            context.cookies.set(name, value, options);
+          });
+        },
       },
-      setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value, options }) => {
-          context.cookies.set(name, value, options);
-        });
-      },
-    },
-  });
+    }
+  );
 
   // Add supabase client to context (for backward compatibility and API endpoints)
   context.locals.supabase = supabase;

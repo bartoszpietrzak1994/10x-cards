@@ -6,6 +6,10 @@ import { defineConfig, devices } from "@playwright/test";
  * - Local: Load via dotenv CLI (e.g., `dotenv -e .env.test -- npx playwright test`)
  *   or source the env file before running tests
  * - GitHub Actions: Set environment variables directly in the workflow
+ *
+ * The webServer configuration automatically starts the Astro dev server before
+ * running tests and waits for it to be ready, ensuring reliable test execution
+ * in both local and CI environments.
  */
 export default defineConfig({
   // Directory where your test files are located.
@@ -27,8 +31,8 @@ export default defineConfig({
 
   // Shared settings for all tests.
   use: {
-    // Base URL is configurable via PUBLIC_SUPABASE_URL environment variable
-    baseURL: process.env.PUBLIC_SUPABASE_URL || "http://localhost:3000",
+    // Make baseURL configurable via environment variable with fallback
+    baseURL: process.env.BASE_URL || "http://localhost:3000",
     // Enable trace on first retry for easier debugging.
     trace: "on-first-retry",
   },
@@ -44,4 +48,12 @@ export default defineConfig({
   // Use a single worker to prevent race conditions with shared test user
   // This ensures tests run sequentially while still running all tests even if one fails
   workers: 1,
+
+  // Automatically start the dev server before tests and stop it after
+  webServer: {
+    command: "npm run dev:e2e",
+    url: "http://localhost:3000",
+    timeout: 120 * 1000, // 2 minutes to start
+    reuseExistingServer: !process.env.CI, // In CI, always start fresh
+  },
 });
