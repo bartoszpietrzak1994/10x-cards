@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * OpenRouter Service Type Definitions
- * 
+ *
  * Type definitions for the OpenRouter service that manages interactions
  * with the OpenRouter API for LLM-based chat functionalities.
  */
@@ -18,7 +19,7 @@ export interface JsonSchema {
  * Response format configuration
  */
 export interface ResponseFormat {
-  type: 'json_schema';
+  type: "json_schema";
   json_schema: JsonSchema;
 }
 
@@ -49,7 +50,7 @@ export interface OpenRouterConfig {
  * Message structure for API requests
  */
 export interface Message {
-  role: 'system' | 'user' | 'assistant';
+  role: "system" | "user" | "assistant";
   content: string;
 }
 
@@ -90,4 +91,3 @@ export interface ChatOverrides {
   modelParams?: ModelParameters;
   responseFormat?: ResponseFormat;
 }
-

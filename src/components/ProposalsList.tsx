@@ -54,18 +54,14 @@ export function ProposalsList({
           />
         </svg>
         <h3 className="mt-4 text-sm font-semibold">No flashcards yet</h3>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Submit text above to generate flashcards with AI.
-        </p>
+        <p className="mt-2 text-sm text-muted-foreground">Submit text above to generate flashcards with AI.</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-semibold">
-        Generated Flashcards ({proposals.length})
-      </h2>
+      <h2 className="text-lg font-semibold">Generated Flashcards ({proposals.length})</h2>
       <div className="grid gap-4">
         {proposals.map((proposal) => (
           <ProposalCard
@@ -83,4 +79,3 @@ export function ProposalsList({
     </div>
   );
 }
-

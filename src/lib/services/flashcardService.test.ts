@@ -1,16 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import {
-  createManualFlashcard,
-  deleteFlashcard,
-  updateFlashcard,
-  FlashcardServiceError,
-} from "./flashcardService";
+import { createManualFlashcard, deleteFlashcard, updateFlashcard, FlashcardServiceError } from "./flashcardService";
 import type { SupabaseClient } from "../db/supabase.client";
-import type {
-  CreateManualFlashcardCommand,
-  UpdateFlashcardCommand,
-  FlashcardDTO,
-} from "@/types";
+import type { CreateManualFlashcardCommand, UpdateFlashcardCommand, FlashcardDTO } from "@/types";
 
 // Mock Supabase client
 const createMockSupabaseClient = () => {
@@ -73,24 +65,24 @@ describe("FlashcardService", () => {
 
     it("should throw FlashcardServiceError with INVALID_USER_ID when userId is empty", async () => {
       // Act & Assert
-      await expect(
-        createManualFlashcard(mockSupabase, "", validCommand)
-      ).rejects.toThrow(FlashcardServiceError);
-      
-      await expect(
-        createManualFlashcard(mockSupabase, "", validCommand)
-      ).rejects.toHaveProperty("code", "INVALID_USER_ID");
+      await expect(createManualFlashcard(mockSupabase, "", validCommand)).rejects.toThrow(FlashcardServiceError);
+
+      await expect(createManualFlashcard(mockSupabase, "", validCommand)).rejects.toHaveProperty(
+        "code",
+        "INVALID_USER_ID"
+      );
     });
 
     it("should throw FlashcardServiceError with INVALID_USER_ID when userId is not a string", async () => {
       // Act & Assert
-      await expect(
-        createManualFlashcard(mockSupabase, null as any, validCommand)
-      ).rejects.toThrow(FlashcardServiceError);
-      
-      await expect(
-        createManualFlashcard(mockSupabase, null as any, validCommand)
-      ).rejects.toHaveProperty("code", "INVALID_USER_ID");
+      await expect(createManualFlashcard(mockSupabase, null as any, validCommand)).rejects.toThrow(
+        FlashcardServiceError
+      );
+
+      await expect(createManualFlashcard(mockSupabase, null as any, validCommand)).rejects.toHaveProperty(
+        "code",
+        "INVALID_USER_ID"
+      );
     });
 
     it("should throw FlashcardServiceError with USER_NOT_FOUND when user doesn't exist", async () => {
@@ -112,13 +104,12 @@ describe("FlashcardService", () => {
       vi.spyOn(mockSupabase, "from").mockImplementation(mockFrom);
 
       // Act & Assert
-      await expect(
-        createManualFlashcard(mockSupabase, userId, validCommand)
-      ).rejects.toThrow(FlashcardServiceError);
-      
-      await expect(
-        createManualFlashcard(mockSupabase, userId, validCommand)
-      ).rejects.toHaveProperty("code", "USER_NOT_FOUND");
+      await expect(createManualFlashcard(mockSupabase, userId, validCommand)).rejects.toThrow(FlashcardServiceError);
+
+      await expect(createManualFlashcard(mockSupabase, userId, validCommand)).rejects.toHaveProperty(
+        "code",
+        "USER_NOT_FOUND"
+      );
     });
 
     it("should throw FlashcardServiceError with DUPLICATE_FLASHCARD when flashcard already exists", async () => {
@@ -140,13 +131,12 @@ describe("FlashcardService", () => {
       vi.spyOn(mockSupabase, "from").mockImplementation(mockFrom);
 
       // Act & Assert
-      await expect(
-        createManualFlashcard(mockSupabase, userId, validCommand)
-      ).rejects.toThrow(FlashcardServiceError);
-      
-      await expect(
-        createManualFlashcard(mockSupabase, userId, validCommand)
-      ).rejects.toHaveProperty("code", "DUPLICATE_FLASHCARD");
+      await expect(createManualFlashcard(mockSupabase, userId, validCommand)).rejects.toThrow(FlashcardServiceError);
+
+      await expect(createManualFlashcard(mockSupabase, userId, validCommand)).rejects.toHaveProperty(
+        "code",
+        "DUPLICATE_FLASHCARD"
+      );
     });
 
     it("should throw FlashcardServiceError with TEXT_TOO_LONG when text exceeds maximum length", async () => {
@@ -168,13 +158,12 @@ describe("FlashcardService", () => {
       vi.spyOn(mockSupabase, "from").mockImplementation(mockFrom);
 
       // Act & Assert
-      await expect(
-        createManualFlashcard(mockSupabase, userId, validCommand)
-      ).rejects.toThrow(FlashcardServiceError);
-      
-      await expect(
-        createManualFlashcard(mockSupabase, userId, validCommand)
-      ).rejects.toHaveProperty("code", "TEXT_TOO_LONG");
+      await expect(createManualFlashcard(mockSupabase, userId, validCommand)).rejects.toThrow(FlashcardServiceError);
+
+      await expect(createManualFlashcard(mockSupabase, userId, validCommand)).rejects.toHaveProperty(
+        "code",
+        "TEXT_TOO_LONG"
+      );
     });
 
     it("should throw FlashcardServiceError with DATABASE_ERROR for generic database errors", async () => {
@@ -196,13 +185,12 @@ describe("FlashcardService", () => {
       vi.spyOn(mockSupabase, "from").mockImplementation(mockFrom);
 
       // Act & Assert
-      await expect(
-        createManualFlashcard(mockSupabase, userId, validCommand)
-      ).rejects.toThrow(FlashcardServiceError);
-      
-      await expect(
-        createManualFlashcard(mockSupabase, userId, validCommand)
-      ).rejects.toHaveProperty("code", "DATABASE_ERROR");
+      await expect(createManualFlashcard(mockSupabase, userId, validCommand)).rejects.toThrow(FlashcardServiceError);
+
+      await expect(createManualFlashcard(mockSupabase, userId, validCommand)).rejects.toHaveProperty(
+        "code",
+        "DATABASE_ERROR"
+      );
     });
 
     it("should throw FlashcardServiceError with NO_DATA_RETURNED when no data is returned", async () => {
@@ -221,13 +209,12 @@ describe("FlashcardService", () => {
       vi.spyOn(mockSupabase, "from").mockImplementation(mockFrom);
 
       // Act & Assert
-      await expect(
-        createManualFlashcard(mockSupabase, userId, validCommand)
-      ).rejects.toThrow(FlashcardServiceError);
-      
-      await expect(
-        createManualFlashcard(mockSupabase, userId, validCommand)
-      ).rejects.toHaveProperty("code", "NO_DATA_RETURNED");
+      await expect(createManualFlashcard(mockSupabase, userId, validCommand)).rejects.toThrow(FlashcardServiceError);
+
+      await expect(createManualFlashcard(mockSupabase, userId, validCommand)).rejects.toHaveProperty(
+        "code",
+        "NO_DATA_RETURNED"
+      );
     });
   });
 
@@ -559,13 +546,12 @@ describe("FlashcardService", () => {
       };
 
       // Act & Assert
-      await expect(
-        updateFlashcard(mockSupabase, "", flashcardId, command)
-      ).rejects.toThrow(FlashcardServiceError);
-      
-      await expect(
-        updateFlashcard(mockSupabase, "", flashcardId, command)
-      ).rejects.toHaveProperty("code", "INVALID_USER_ID");
+      await expect(updateFlashcard(mockSupabase, "", flashcardId, command)).rejects.toThrow(FlashcardServiceError);
+
+      await expect(updateFlashcard(mockSupabase, "", flashcardId, command)).rejects.toHaveProperty(
+        "code",
+        "INVALID_USER_ID"
+      );
     });
 
     it("should throw FlashcardServiceError with INVALID_FLASHCARD_ID when flashcardId is invalid", async () => {
@@ -575,13 +561,12 @@ describe("FlashcardService", () => {
       };
 
       // Act & Assert
-      await expect(
-        updateFlashcard(mockSupabase, userId, 0, command)
-      ).rejects.toThrow(FlashcardServiceError);
-      
-      await expect(
-        updateFlashcard(mockSupabase, userId, 0, command)
-      ).rejects.toHaveProperty("code", "INVALID_FLASHCARD_ID");
+      await expect(updateFlashcard(mockSupabase, userId, 0, command)).rejects.toThrow(FlashcardServiceError);
+
+      await expect(updateFlashcard(mockSupabase, userId, 0, command)).rejects.toHaveProperty(
+        "code",
+        "INVALID_FLASHCARD_ID"
+      );
     });
 
     it("should throw FlashcardServiceError with NO_UPDATE_FIELDS when no fields provided", async () => {
@@ -589,13 +574,12 @@ describe("FlashcardService", () => {
       const command: UpdateFlashcardCommand = {};
 
       // Act & Assert
-      await expect(
-        updateFlashcard(mockSupabase, userId, flashcardId, command)
-      ).rejects.toThrow(FlashcardServiceError);
-      
-      await expect(
-        updateFlashcard(mockSupabase, userId, flashcardId, command)
-      ).rejects.toHaveProperty("code", "NO_UPDATE_FIELDS");
+      await expect(updateFlashcard(mockSupabase, userId, flashcardId, command)).rejects.toThrow(FlashcardServiceError);
+
+      await expect(updateFlashcard(mockSupabase, userId, flashcardId, command)).rejects.toHaveProperty(
+        "code",
+        "NO_UPDATE_FIELDS"
+      );
     });
 
     it("should throw FlashcardServiceError with FLASHCARD_NOT_FOUND when flashcard doesn't exist", async () => {
@@ -623,13 +607,12 @@ describe("FlashcardService", () => {
       vi.spyOn(mockSupabase, "from").mockImplementation(mockFrom);
 
       // Act & Assert
-      await expect(
-        updateFlashcard(mockSupabase, userId, flashcardId, command)
-      ).rejects.toThrow(FlashcardServiceError);
-      
-      await expect(
-        updateFlashcard(mockSupabase, userId, flashcardId, command)
-      ).rejects.toHaveProperty("code", "FLASHCARD_NOT_FOUND");
+      await expect(updateFlashcard(mockSupabase, userId, flashcardId, command)).rejects.toThrow(FlashcardServiceError);
+
+      await expect(updateFlashcard(mockSupabase, userId, flashcardId, command)).rejects.toHaveProperty(
+        "code",
+        "FLASHCARD_NOT_FOUND"
+      );
     });
 
     it("should throw FlashcardServiceError with TEXT_TOO_LONG when text exceeds maximum length", async () => {
@@ -675,13 +658,12 @@ describe("FlashcardService", () => {
       vi.spyOn(mockSupabase, "from").mockImplementation(mockFrom);
 
       // Act & Assert
-      await expect(
-        updateFlashcard(mockSupabase, userId, flashcardId, command)
-      ).rejects.toThrow(FlashcardServiceError);
-      
-      await expect(
-        updateFlashcard(mockSupabase, userId, flashcardId, command)
-      ).rejects.toHaveProperty("code", "TEXT_TOO_LONG");
+      await expect(updateFlashcard(mockSupabase, userId, flashcardId, command)).rejects.toThrow(FlashcardServiceError);
+
+      await expect(updateFlashcard(mockSupabase, userId, flashcardId, command)).rejects.toHaveProperty(
+        "code",
+        "TEXT_TOO_LONG"
+      );
     });
 
     it("should throw FlashcardServiceError with NO_DATA_RETURNED when no data is returned after update", async () => {
@@ -724,13 +706,12 @@ describe("FlashcardService", () => {
       vi.spyOn(mockSupabase, "from").mockImplementation(mockFrom);
 
       // Act & Assert
-      await expect(
-        updateFlashcard(mockSupabase, userId, flashcardId, command)
-      ).rejects.toThrow(FlashcardServiceError);
-      
-      await expect(
-        updateFlashcard(mockSupabase, userId, flashcardId, command)
-      ).rejects.toHaveProperty("code", "NO_DATA_RETURNED");
+      await expect(updateFlashcard(mockSupabase, userId, flashcardId, command)).rejects.toThrow(FlashcardServiceError);
+
+      await expect(updateFlashcard(mockSupabase, userId, flashcardId, command)).rejects.toHaveProperty(
+        "code",
+        "NO_DATA_RETURNED"
+      );
     });
   });
 
@@ -768,4 +749,3 @@ describe("FlashcardService", () => {
     });
   });
 });
-

@@ -39,12 +39,12 @@ export class AuthServiceError extends Error {
 
 /**
  * Registers a new user in the system.
- * 
+ *
  * Process:
  * 1. Creates user in Supabase Auth (auth.users)
  * 2. Supabase automatically sends confirmation email
  * 3. Database trigger creates record in public.users after email confirmation
- * 
+ *
  * @param supabase - Supabase client instance
  * @param command - Registration data (email, password)
  * @returns Promise with created user data
@@ -65,41 +65,29 @@ export async function registerUser(
 
     if (error) {
       // Check for specific error types
-      if (error.message.toLowerCase().includes("already registered") || 
-          error.message.toLowerCase().includes("already exists")) {
-        throw new AuthServiceError(
-          "This email address is already registered",
-          "USER_ALREADY_EXISTS",
-          error
-        );
+      if (
+        error.message.toLowerCase().includes("already registered") ||
+        error.message.toLowerCase().includes("already exists")
+      ) {
+        throw new AuthServiceError("This email address is already registered", "USER_ALREADY_EXISTS", error);
       }
 
       if (error.message.toLowerCase().includes("password")) {
-        throw new AuthServiceError(
-          "Password does not meet security requirements",
-          "WEAK_PASSWORD",
-          error
-        );
+        throw new AuthServiceError("Password does not meet security requirements", "WEAK_PASSWORD", error);
       }
 
-      throw new AuthServiceError(
-        "Failed to register user",
-        "AUTH_ERROR",
-        error
-      );
+      throw new AuthServiceError("Failed to register user", "AUTH_ERROR", error);
     }
 
     if (!data.user) {
-      throw new AuthServiceError(
-        "Failed to create user account",
-        "AUTH_ERROR"
-      );
+      throw new AuthServiceError("Failed to create user account", "AUTH_ERROR");
     }
 
     return {
       message: "Registration successful. Please check your email to confirm your account.",
       user: {
         id: data.user.id,
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         email: data.user.email!,
       },
     };
@@ -108,17 +96,13 @@ export async function registerUser(
       throw error;
     }
 
-    throw new AuthServiceError(
-      "An unexpected error occurred during registration",
-      "AUTH_ERROR",
-      error
-    );
+    throw new AuthServiceError("An unexpected error occurred during registration", "AUTH_ERROR", error);
   }
 }
 
 /**
  * Logs a user into the system.
- * 
+ *
  * @param supabase - Supabase client instance
  * @param command - Login data (email, password)
  * @returns Promise with logged-in user data and session
@@ -145,18 +129,11 @@ export async function loginUser(
       }
 
       // Invalid credentials
-      throw new AuthServiceError(
-        "Invalid email or password",
-        "INVALID_CREDENTIALS",
-        error
-      );
+      throw new AuthServiceError("Invalid email or password", "INVALID_CREDENTIALS", error);
     }
 
     if (!data.session || !data.user) {
-      throw new AuthServiceError(
-        "Failed to create session",
-        "AUTH_ERROR"
-      );
+      throw new AuthServiceError("Failed to create session", "AUTH_ERROR");
     }
 
     // Fetch user data from public.users table with role
@@ -175,72 +152,48 @@ export async function loginUser(
       throw error;
     }
 
-    throw new AuthServiceError(
-      "An unexpected error occurred during login",
-      "AUTH_ERROR",
-      error
-    );
+    throw new AuthServiceError("An unexpected error occurred during login", "AUTH_ERROR", error);
   }
 }
 
 /**
  * Logs out a user from the system.
- * 
+ *
  * @param supabase - Supabase client instance
  * @throws AuthServiceError
  */
-export async function logoutUser(
-  supabase: SupabaseClient
-): Promise<void> {
+export async function logoutUser(supabase: SupabaseClient): Promise<void> {
   try {
     const { error } = await supabase.auth.signOut();
 
     if (error) {
-      throw new AuthServiceError(
-        "Failed to logout user",
-        "AUTH_ERROR",
-        error
-      );
+      throw new AuthServiceError("Failed to logout user", "AUTH_ERROR", error);
     }
   } catch (error) {
     if (error instanceof AuthServiceError) {
       throw error;
     }
 
-    throw new AuthServiceError(
-      "An unexpected error occurred during logout",
-      "AUTH_ERROR",
-      error
-    );
+    throw new AuthServiceError("An unexpected error occurred during logout", "AUTH_ERROR", error);
   }
 }
 
 /**
  * Initiates the password recovery process.
  * Sends a password recovery email to the user.
- * 
+ *
  * @param supabase - Supabase client instance
  * @param command - Email and redirect URL
  * @throws AuthServiceError
  */
-export async function recoverPassword(
-  supabase: SupabaseClient,
-  command: RecoverPasswordCommand
-): Promise<void> {
+export async function recoverPassword(supabase: SupabaseClient, command: RecoverPasswordCommand): Promise<void> {
   try {
-    const { error } = await supabase.auth.resetPasswordForEmail(
-      command.email,
-      {
-        redirectTo: command.redirectTo,
-      }
-    );
+    const { error } = await supabase.auth.resetPasswordForEmail(command.email, {
+      redirectTo: command.redirectTo,
+    });
 
     if (error) {
-      throw new AuthServiceError(
-        "Failed to send password recovery email",
-        "EMAIL_SEND_FAILED",
-        error
-      );
+      throw new AuthServiceError("Failed to send password recovery email", "EMAIL_SEND_FAILED", error);
     }
 
     // Always return success (don't reveal if email exists)
@@ -249,25 +202,18 @@ export async function recoverPassword(
       throw error;
     }
 
-    throw new AuthServiceError(
-      "An unexpected error occurred during password recovery",
-      "AUTH_ERROR",
-      error
-    );
+    throw new AuthServiceError("An unexpected error occurred during password recovery", "AUTH_ERROR", error);
   }
 }
 
 /**
  * Resets user password using a recovery token.
- * 
+ *
  * @param supabase - Supabase client instance
  * @param command - Token and new password
  * @throws AuthServiceError
  */
-export async function resetPassword(
-  supabase: SupabaseClient,
-  command: ResetPasswordCommand
-): Promise<void> {
+export async function resetPassword(supabase: SupabaseClient, command: ResetPasswordCommand): Promise<void> {
   try {
     // Verify the OTP token first
     const { error: verifyError } = await supabase.auth.verifyOtp({
@@ -297,55 +243,37 @@ export async function resetPassword(
     });
 
     if (updateError) {
-      throw new AuthServiceError(
-        "Failed to update password",
-        "AUTH_ERROR",
-        updateError
-      );
+      throw new AuthServiceError("Failed to update password", "AUTH_ERROR", updateError);
     }
   } catch (error) {
     if (error instanceof AuthServiceError) {
       throw error;
     }
 
-    throw new AuthServiceError(
-      "An unexpected error occurred during password reset",
-      "AUTH_ERROR",
-      error
-    );
+    throw new AuthServiceError("An unexpected error occurred during password reset", "AUTH_ERROR", error);
   }
 }
 
 /**
  * Fetches complete user data from the public.users table.
- * 
+ *
  * @param supabase - Supabase client instance
  * @param userId - User ID from auth.users
  * @returns Promise with UserDTO
  * @throws AuthServiceError
  */
-export async function getUserFromSession(
-  supabase: SupabaseClient,
-  userId: string
-): Promise<UserDTO> {
+export async function getUserFromSession(supabase: SupabaseClient, userId: string): Promise<UserDTO> {
   try {
-    const { data, error } = await supabase
-      .from("users")
-      .select("id, email, roles(name)")
-      .eq("id", userId)
-      .single();
+    const { data, error } = await supabase.from("users").select("id, email, roles(name)").eq("id", userId).single();
 
     if (error || !data) {
-      throw new AuthServiceError(
-        "Failed to fetch user data",
-        "DATABASE_ERROR",
-        error
-      );
+      throw new AuthServiceError("Failed to fetch user data", "DATABASE_ERROR", error);
     }
 
     return {
       id: data.id,
       email: data.email,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       role: (data.roles as any)?.name || "user",
     };
   } catch (error) {
@@ -353,10 +281,6 @@ export async function getUserFromSession(
       throw error;
     }
 
-    throw new AuthServiceError(
-      "An unexpected error occurred while fetching user data",
-      "DATABASE_ERROR",
-      error
-    );
+    throw new AuthServiceError("An unexpected error occurred while fetching user data", "DATABASE_ERROR", error);
   }
 }

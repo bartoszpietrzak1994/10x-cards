@@ -17,7 +17,7 @@ export interface ProposalWithEditState extends FlashcardProposal {
 
 /**
  * Hook for managing proposal editing state
- * 
+ *
  * Handles:
  * - Edit mode toggling
  * - Field validation
@@ -41,7 +41,7 @@ export function useProposalEditing(initialProposals: FlashcardProposal[] = []) {
     setProposals((prev) => {
       // Preserve editing state for existing proposals
       const prevMap = new Map(prev.map((p) => [p.id, p]));
-      
+
       return newProposals.map((p) => {
         const existing = prevMap.get(p.id);
         if (existing?.isEditing) {
@@ -90,7 +90,7 @@ export function useProposalEditing(initialProposals: FlashcardProposal[] = []) {
 
         // Validate fields
         const validationErrors: { front?: string; back?: string } = {};
-        
+
         const frontValidation = validateFlashcardField("front", editFront);
         if (!frontValidation.isValid) {
           validationErrors.front = frontValidation.error;
@@ -105,8 +105,7 @@ export function useProposalEditing(initialProposals: FlashcardProposal[] = []) {
           ...p,
           editFront,
           editBack,
-          validationErrors:
-            Object.keys(validationErrors).length > 0 ? validationErrors : undefined,
+          validationErrors: Object.keys(validationErrors).length > 0 ? validationErrors : undefined,
         };
       })
     );
@@ -199,4 +198,3 @@ export function useProposalEditing(initialProposals: FlashcardProposal[] = []) {
     getProposal,
   };
 }
-

@@ -6,20 +6,20 @@ import type { UserDTO } from "../types.ts";
 export const onRequest = defineMiddleware(async (context, next) => {
   // Create Supabase server client with cookie handling
   const supabase = createServerClient<Database>(
-    import.meta.env.SUPABASE_URL,
-    import.meta.env.SUPABASE_KEY,
+    import.meta.env.PUBLIC_SUPABASE_URL,
+    import.meta.env.PUBLIC_SUPABASE_ANON_KEY,
     {
       cookies: {
         getAll() {
           // Parse cookies from request headers
-          const cookieHeader = context.request.headers.get('cookie');
+          const cookieHeader = context.request.headers.get("cookie");
           if (!cookieHeader) return [];
-          
-          return cookieHeader.split(';').map((cookie) => {
-            const [name, ...valueParts] = cookie.trim().split('=');
+
+          return cookieHeader.split(";").map((cookie) => {
+            const [name, ...valueParts] = cookie.trim().split("=");
             return {
               name: name.trim(),
-              value: valueParts.join('=').trim(),
+              value: valueParts.join("=").trim(),
             };
           });
         },
@@ -37,7 +37,10 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   // Verify session and get user data
   try {
-    const { data: { session }, error } = await supabase.auth.getSession();
+    const {
+      data: { session },
+      error,
+    } = await supabase.auth.getSession();
 
     if (error || !session) {
       context.locals.user = null;
@@ -60,11 +63,13 @@ export const onRequest = defineMiddleware(async (context, next) => {
     const user: UserDTO = {
       id: userData.id,
       email: userData.email,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       role: (userData.roles as any)?.name || "user",
     };
 
     context.locals.user = user;
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error("Error in auth middleware:", error);
     context.locals.user = null;
   }

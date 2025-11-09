@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { initiateAIGeneration } from "./aiGenerationService";
 import type { SupabaseClient } from "../db/supabase.client";
@@ -22,16 +23,14 @@ describe("AIGenerationService", () => {
 
   beforeEach(() => {
     mockSupabase = createMockSupabaseClient();
-    
+
     // Create a mock OpenRouter service instance
     mockOpenRouterService = {
       sendChat: vi.fn(),
     };
 
     // Mock the factory function to return our mock service
-    vi.mocked(openrouterService.createOpenRouterService).mockReturnValue(
-      mockOpenRouterService
-    );
+    vi.mocked(openrouterService.createOpenRouterService).mockReturnValue(mockOpenRouterService);
 
     vi.clearAllMocks();
   });
@@ -100,16 +99,16 @@ describe("AIGenerationService", () => {
 
     it("should throw error when input text is empty", async () => {
       // Act & Assert
-      await expect(
-        initiateAIGeneration(mockSupabase, generationId, "", userId)
-      ).rejects.toThrow("Input text cannot be empty");
+      await expect(initiateAIGeneration(mockSupabase, generationId, "", userId)).rejects.toThrow(
+        "Input text cannot be empty"
+      );
     });
 
     it("should throw error when input text is only whitespace", async () => {
       // Act & Assert
-      await expect(
-        initiateAIGeneration(mockSupabase, generationId, "   ", userId)
-      ).rejects.toThrow("Input text cannot be empty");
+      await expect(initiateAIGeneration(mockSupabase, generationId, "   ", userId)).rejects.toThrow(
+        "Input text cannot be empty"
+      );
     });
 
     it("should throw error when input text is too short (less than 1000 characters)", async () => {
@@ -117,9 +116,9 @@ describe("AIGenerationService", () => {
       const shortText = "a".repeat(999);
 
       // Act & Assert
-      await expect(
-        initiateAIGeneration(mockSupabase, generationId, shortText, userId)
-      ).rejects.toThrow("Input text must be between 1000 and 10000 characters");
+      await expect(initiateAIGeneration(mockSupabase, generationId, shortText, userId)).rejects.toThrow(
+        "Input text must be between 1000 and 10000 characters"
+      );
     });
 
     it("should throw error when input text is too long (more than 10000 characters)", async () => {
@@ -127,9 +126,9 @@ describe("AIGenerationService", () => {
       const longText = "a".repeat(10001);
 
       // Act & Assert
-      await expect(
-        initiateAIGeneration(mockSupabase, generationId, longText, userId)
-      ).rejects.toThrow("Input text must be between 1000 and 10000 characters");
+      await expect(initiateAIGeneration(mockSupabase, generationId, longText, userId)).rejects.toThrow(
+        "Input text must be between 1000 and 10000 characters"
+      );
     });
 
     it("should accept input text at minimum boundary (exactly 1000 characters)", async () => {
@@ -168,9 +167,9 @@ describe("AIGenerationService", () => {
       mockOpenRouterService.sendChat.mockResolvedValue(emptyResponse);
 
       // Act & Assert
-      await expect(
-        initiateAIGeneration(mockSupabase, generationId, validInputText, userId)
-      ).rejects.toThrow("AI generated no flashcards");
+      await expect(initiateAIGeneration(mockSupabase, generationId, validInputText, userId)).rejects.toThrow(
+        "AI generated no flashcards"
+      );
     });
 
     it("should throw error when AI response has no flashcards property", async () => {
@@ -183,9 +182,9 @@ describe("AIGenerationService", () => {
       mockOpenRouterService.sendChat.mockResolvedValue(invalidResponse);
 
       // Act & Assert
-      await expect(
-        initiateAIGeneration(mockSupabase, generationId, validInputText, userId)
-      ).rejects.toThrow("Invalid response structure: missing flashcards array");
+      await expect(initiateAIGeneration(mockSupabase, generationId, validInputText, userId)).rejects.toThrow(
+        "Invalid response structure: missing flashcards array"
+      );
     });
 
     it("should throw error when AI response is not valid JSON", async () => {
@@ -198,18 +197,16 @@ describe("AIGenerationService", () => {
       mockOpenRouterService.sendChat.mockResolvedValue(invalidResponse);
 
       // Act & Assert
-      await expect(
-        initiateAIGeneration(mockSupabase, generationId, validInputText, userId)
-      ).rejects.toThrow("Failed to parse AI response as JSON");
+      await expect(initiateAIGeneration(mockSupabase, generationId, validInputText, userId)).rejects.toThrow(
+        "Failed to parse AI response as JSON"
+      );
     });
 
     it("should throw error when flashcard front is empty", async () => {
       // Arrange
       const responseWithEmptyFront = {
         content: JSON.stringify({
-          flashcards: [
-            { front: "", back: "Answer 1" },
-          ],
+          flashcards: [{ front: "", back: "Answer 1" }],
         }),
         model: "openai/gpt-4o-mini",
       };
@@ -218,18 +215,16 @@ describe("AIGenerationService", () => {
       mockOpenRouterService.sendChat.mockResolvedValue(responseWithEmptyFront);
 
       // Act & Assert
-      await expect(
-        initiateAIGeneration(mockSupabase, generationId, validInputText, userId)
-      ).rejects.toThrow("Flashcard front cannot be empty");
+      await expect(initiateAIGeneration(mockSupabase, generationId, validInputText, userId)).rejects.toThrow(
+        "Flashcard front cannot be empty"
+      );
     });
 
     it("should throw error when flashcard back is empty", async () => {
       // Arrange
       const responseWithEmptyBack = {
         content: JSON.stringify({
-          flashcards: [
-            { front: "Question 1", back: "" },
-          ],
+          flashcards: [{ front: "Question 1", back: "" }],
         }),
         model: "openai/gpt-4o-mini",
       };
@@ -238,9 +233,9 @@ describe("AIGenerationService", () => {
       mockOpenRouterService.sendChat.mockResolvedValue(responseWithEmptyBack);
 
       // Act & Assert
-      await expect(
-        initiateAIGeneration(mockSupabase, generationId, validInputText, userId)
-      ).rejects.toThrow("Flashcard back cannot be empty");
+      await expect(initiateAIGeneration(mockSupabase, generationId, validInputText, userId)).rejects.toThrow(
+        "Flashcard back cannot be empty"
+      );
     });
 
     it("should throw error when flashcard front exceeds 200 characters", async () => {
@@ -248,9 +243,7 @@ describe("AIGenerationService", () => {
       const longFront = "a".repeat(201);
       const responseWithLongFront = {
         content: JSON.stringify({
-          flashcards: [
-            { front: longFront, back: "Answer 1" },
-          ],
+          flashcards: [{ front: longFront, back: "Answer 1" }],
         }),
         model: "openai/gpt-4o-mini",
       };
@@ -259,9 +252,9 @@ describe("AIGenerationService", () => {
       mockOpenRouterService.sendChat.mockResolvedValue(responseWithLongFront);
 
       // Act & Assert
-      await expect(
-        initiateAIGeneration(mockSupabase, generationId, validInputText, userId)
-      ).rejects.toThrow("Flashcard front exceeds maximum length of 200 characters");
+      await expect(initiateAIGeneration(mockSupabase, generationId, validInputText, userId)).rejects.toThrow(
+        "Flashcard front exceeds maximum length of 200 characters"
+      );
     });
 
     it("should throw error when flashcard back exceeds 500 characters", async () => {
@@ -269,9 +262,7 @@ describe("AIGenerationService", () => {
       const longBack = "a".repeat(501);
       const responseWithLongBack = {
         content: JSON.stringify({
-          flashcards: [
-            { front: "Question 1", back: longBack },
-          ],
+          flashcards: [{ front: "Question 1", back: longBack }],
         }),
         model: "openai/gpt-4o-mini",
       };
@@ -280,9 +271,9 @@ describe("AIGenerationService", () => {
       mockOpenRouterService.sendChat.mockResolvedValue(responseWithLongBack);
 
       // Act & Assert
-      await expect(
-        initiateAIGeneration(mockSupabase, generationId, validInputText, userId)
-      ).rejects.toThrow("Flashcard back exceeds maximum length of 500 characters");
+      await expect(initiateAIGeneration(mockSupabase, generationId, validInputText, userId)).rejects.toThrow(
+        "Flashcard back exceeds maximum length of 500 characters"
+      );
     });
 
     it("should accept flashcard front at maximum boundary (200 characters)", async () => {
@@ -290,9 +281,7 @@ describe("AIGenerationService", () => {
       const maxFront = "a".repeat(200);
       const responseWithMaxFront = {
         content: JSON.stringify({
-          flashcards: [
-            { front: maxFront, back: "Answer 1" },
-          ],
+          flashcards: [{ front: maxFront, back: "Answer 1" }],
         }),
         usage: { total_tokens: 100 },
         model: "openai/gpt-4o-mini",
@@ -313,9 +302,7 @@ describe("AIGenerationService", () => {
       const maxBack = "a".repeat(500);
       const responseWithMaxBack = {
         content: JSON.stringify({
-          flashcards: [
-            { front: "Question 1", back: maxBack },
-          ],
+          flashcards: [{ front: "Question 1", back: maxBack }],
         }),
         usage: { total_tokens: 100 },
         model: "openai/gpt-4o-mini",
@@ -335,9 +322,7 @@ describe("AIGenerationService", () => {
       // Arrange
       const responseWithWhitespace = {
         content: JSON.stringify({
-          flashcards: [
-            { front: "  Question 1  ", back: "  Answer 1  " },
-          ],
+          flashcards: [{ front: "  Question 1  ", back: "  Answer 1  " }],
         }),
         usage: { total_tokens: 100 },
         model: "openai/gpt-4o-mini",
@@ -419,7 +404,7 @@ describe("AIGenerationService", () => {
 
     it("should update flashcards_ai_generation with metadata", async () => {
       // Arrange
-      let updateCalls: any[] = [];
+      const updateCalls: any[] = [];
       const mockFrom = vi.fn().mockImplementation((table: string) => {
         if (table === "flashcards") {
           return {
@@ -461,7 +446,7 @@ describe("AIGenerationService", () => {
 
     it("should update ai_logs with timing information", async () => {
       // Arrange
-      let aiLogUpdates: any[] = [];
+      const aiLogUpdates: any[] = [];
       const mockFrom = vi.fn().mockImplementation((table: string) => {
         if (table === "flashcards") {
           return {
@@ -501,7 +486,7 @@ describe("AIGenerationService", () => {
 
     it("should update ai_logs with error on failure", async () => {
       // Arrange
-      let errorUpdates: any[] = [];
+      const errorUpdates: any[] = [];
       const mockFrom = vi.fn().mockImplementation((table: string) => {
         if (table === "ai_logs") {
           return {
@@ -525,9 +510,9 @@ describe("AIGenerationService", () => {
       mockOpenRouterService.sendChat.mockRejectedValue(new Error("API Error"));
 
       // Act & Assert
-      await expect(
-        initiateAIGeneration(mockSupabase, generationId, validInputText, userId)
-      ).rejects.toThrow("API Error");
+      await expect(initiateAIGeneration(mockSupabase, generationId, validInputText, userId)).rejects.toThrow(
+        "API Error"
+      );
 
       // Assert error was logged
       expect(errorUpdates.length).toBeGreaterThan(0);
@@ -555,9 +540,9 @@ describe("AIGenerationService", () => {
       mockOpenRouterService.sendChat.mockResolvedValue(mockAIResponse);
 
       // Act & Assert
-      await expect(
-        initiateAIGeneration(mockSupabase, generationId, validInputText, userId)
-      ).rejects.toThrow("Failed to create flashcard proposals: Database error");
+      await expect(initiateAIGeneration(mockSupabase, generationId, validInputText, userId)).rejects.toThrow(
+        "Failed to create flashcard proposals: Database error"
+      );
     });
 
     it("should handle database error when updating generation record", async () => {
@@ -588,9 +573,9 @@ describe("AIGenerationService", () => {
       mockOpenRouterService.sendChat.mockResolvedValue(mockAIResponse);
 
       // Act & Assert
-      await expect(
-        initiateAIGeneration(mockSupabase, generationId, validInputText, userId)
-      ).rejects.toThrow("Failed to update generation record: Update failed");
+      await expect(initiateAIGeneration(mockSupabase, generationId, validInputText, userId)).rejects.toThrow(
+        "Failed to update generation record: Update failed"
+      );
     });
 
     it("should handle database error when updating ai_logs", async () => {
@@ -621,35 +606,31 @@ describe("AIGenerationService", () => {
       mockOpenRouterService.sendChat.mockResolvedValue(mockAIResponse);
 
       // Act & Assert
-      await expect(
-        initiateAIGeneration(mockSupabase, generationId, validInputText, userId)
-      ).rejects.toThrow("Failed to update ai_logs: Log update failed");
+      await expect(initiateAIGeneration(mockSupabase, generationId, validInputText, userId)).rejects.toThrow(
+        "Failed to update ai_logs: Log update failed"
+      );
     });
 
     it("should handle OpenRouter service error", async () => {
       // Arrange
-      mockOpenRouterService.sendChat.mockRejectedValue(
-        new Error("OpenRouter Service: Rate limit exceeded")
-      );
+      mockOpenRouterService.sendChat.mockRejectedValue(new Error("OpenRouter Service: Rate limit exceeded"));
 
       // Act & Assert
-      await expect(
-        initiateAIGeneration(mockSupabase, generationId, validInputText, userId)
-      ).rejects.toThrow("OpenRouter Service: Rate limit exceeded");
+      await expect(initiateAIGeneration(mockSupabase, generationId, validInputText, userId)).rejects.toThrow(
+        "OpenRouter Service: Rate limit exceeded"
+      );
     });
 
     it("should handle response without usage statistics", async () => {
       // Arrange
       const responseWithoutUsage = {
         content: JSON.stringify({
-          flashcards: [
-            { front: "Question 1", back: "Answer 1" },
-          ],
+          flashcards: [{ front: "Question 1", back: "Answer 1" }],
         }),
         model: "openai/gpt-4o-mini",
       };
 
-      let updateCalls: any[] = [];
+      const updateCalls: any[] = [];
       const mockFrom = vi.fn().mockImplementation((table: string) => {
         if (table === "flashcards") {
           return {
@@ -688,14 +669,12 @@ describe("AIGenerationService", () => {
       // Arrange
       const responseWithoutModel = {
         content: JSON.stringify({
-          flashcards: [
-            { front: "Question 1", back: "Answer 1" },
-          ],
+          flashcards: [{ front: "Question 1", back: "Answer 1" }],
         }),
         usage: { total_tokens: 100 },
       };
 
-      let updateCalls: any[] = [];
+      const updateCalls: any[] = [];
       const mockFrom = vi.fn().mockImplementation((table: string) => {
         if (table === "flashcards") {
           return {
@@ -731,4 +710,3 @@ describe("AIGenerationService", () => {
     });
   });
 });
-

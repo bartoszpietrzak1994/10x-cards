@@ -38,9 +38,7 @@ export function ProposalCard({
   onEditChange,
 }: ProposalCardProps) {
   const handleDelete = async () => {
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this flashcard? This action cannot be undone."
-    );
+    const confirmed = window.confirm("Are you sure you want to delete this flashcard? This action cannot be undone.");
     if (confirmed) {
       await onDelete(proposal.id);
     }
@@ -81,9 +79,7 @@ export function ProposalCard({
           >
             {getTypeLabel()}
           </span>
-          <span className="text-xs text-muted-foreground">
-            ID: {proposal.id}
-          </span>
+          <span className="text-xs text-muted-foreground">ID: {proposal.id}</span>
         </div>
       </CardHeader>
 
@@ -94,9 +90,7 @@ export function ProposalCard({
               front: proposal.editFront,
               back: proposal.editBack,
             }}
-            onChange={(value) =>
-              onEditChange(proposal.id, { front: value.front, back: value.back })
-            }
+            onChange={(value) => onEditChange(proposal.id, { front: value.front, back: value.back })}
             errors={proposal.validationErrors}
             onSave={() =>
               onEditSave(proposal.id, {
@@ -109,15 +103,11 @@ export function ProposalCard({
         ) : (
           <>
             <div>
-              <dt className="text-sm font-medium text-muted-foreground mb-1">
-                Front
-              </dt>
+              <dt className="text-sm font-medium text-muted-foreground mb-1">Front</dt>
               <dd className="text-sm">{proposal.front}</dd>
             </div>
             <div>
-              <dt className="text-sm font-medium text-muted-foreground mb-1">
-                Back
-              </dt>
+              <dt className="text-sm font-medium text-muted-foreground mb-1">Back</dt>
               <dd className="text-sm whitespace-pre-wrap">{proposal.back}</dd>
             </div>
           </>
@@ -126,11 +116,7 @@ export function ProposalCard({
 
       {!proposal.isEditing && (
         <CardFooter className="flex gap-2">
-          <Button
-            onClick={() => onAccept(proposal.id)}
-            size="sm"
-            variant="default"
-          >
+          <Button onClick={() => onAccept(proposal.id)} size="sm" variant="default">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
@@ -140,19 +126,11 @@ export function ProposalCard({
               className="h-4 w-4 mr-1"
               aria-hidden="true"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M4.5 12.75l6 6 9-13.5"
-              />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
             </svg>
             Accept
           </Button>
-          <Button
-            onClick={() => onEditStart(proposal.id)}
-            size="sm"
-            variant="outline"
-          >
+          <Button onClick={() => onEditStart(proposal.id)} size="sm" variant="outline">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
@@ -170,11 +148,7 @@ export function ProposalCard({
             </svg>
             Edit
           </Button>
-          <Button
-            onClick={handleDelete}
-            size="sm"
-            variant="destructive"
-          >
+          <Button onClick={handleDelete} size="sm" variant="destructive">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
@@ -197,4 +171,3 @@ export function ProposalCard({
     </Card>
   );
 }
-

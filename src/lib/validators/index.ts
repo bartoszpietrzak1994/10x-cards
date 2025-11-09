@@ -1,6 +1,6 @@
 /**
  * Centralized validators export
- * 
+ *
  * This module exports all validation schemas and utilities
  * for easy importing throughout the application.
  */
@@ -36,4 +36,3 @@ export {
   type RecoverPasswordInput,
   type ResetPasswordInput,
 } from "./authSchemas";
-

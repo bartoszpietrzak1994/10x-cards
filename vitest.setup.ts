@@ -1,11 +1,11 @@
-import { beforeAll, afterEach, afterAll } from 'vitest';
-import '@testing-library/jest-dom';
+import { beforeAll, afterEach, afterAll } from "vitest";
+import "@testing-library/jest-dom";
 
 // Setup for all tests
 beforeAll(() => {
   // Mock environment variables if needed
   if (!import.meta.env.SITE) {
-    import.meta.env.SITE = 'http://localhost:4321';
+    import.meta.env.SITE = "http://localhost:4321";
   }
 });
 
@@ -18,4 +18,3 @@ afterEach(() => {
 afterAll(() => {
   // Final cleanup
 });
-

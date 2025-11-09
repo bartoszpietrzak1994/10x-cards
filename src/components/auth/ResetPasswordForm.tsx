@@ -73,9 +73,7 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
       if (!response.ok) {
         if (response.status === 400) {
           if (data.code === "INVALID_TOKEN" || data.code === "TOKEN_EXPIRED") {
-            setGeneralError(
-              "The password reset link is invalid or has expired. Please request a new link."
-            );
+            setGeneralError("The password reset link is invalid or has expired. Please request a new link.");
           } else {
             setGeneralError("The data is invalid. Please check the form and try again.");
           }
@@ -85,9 +83,7 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
         return;
       }
 
-      setSuccessMessage(
-        "Password has been changed successfully. We will redirect you to the login page shortly."
-      );
+      setSuccessMessage("Password has been changed successfully. We will redirect you to the login page shortly.");
 
       // Clear form
       setPassword("");
@@ -98,8 +94,7 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
       setTimeout(() => {
         window.location.href = "/auth/login";
       }, 3000);
-    } catch (error) {
-      console.error("Password reset error:", error);
+    } catch {
       setGeneralError("A network error occurred. Please try again later.");
     } finally {
       setIsLoading(false);

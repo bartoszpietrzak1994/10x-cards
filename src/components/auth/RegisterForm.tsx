@@ -23,8 +23,7 @@ export function RegisterForm() {
     switch (name) {
       case "email":
         if (!value) return "Email address is required";
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value))
-          return "Invalid email address format";
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return "Invalid email address format";
         return undefined;
       case "password":
         if (!value) return "Password is required";
@@ -72,13 +71,9 @@ export function RegisterForm() {
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
         if (response.status === 409) {
-          setGeneralError(
-            "This email address is already registered. Please log in or use a different email."
-          );
+          setGeneralError("This email address is already registered. Please log in or use a different email.");
         } else if (response.status === 400) {
           setGeneralError("The data is invalid. Please check the form and try again.");
         } else {
@@ -95,8 +90,7 @@ export function RegisterForm() {
       setPassword("");
       setConfirmPassword("");
       setErrors({});
-    } catch (error) {
-      console.error("Registration error:", error);
+    } catch {
       setGeneralError("A network error occurred. Please try again later.");
     } finally {
       setIsLoading(false);
@@ -190,4 +184,3 @@ export function RegisterForm() {
     </form>
   );
 }
-

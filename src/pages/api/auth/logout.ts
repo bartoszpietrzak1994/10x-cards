@@ -5,9 +5,9 @@ export const prerender = false;
 
 /**
  * POST /api/auth/logout
- * 
+ *
  * Logs out the current user and clears session.
- * 
+ *
  * Responses:
  * - 200: Logout successful
  * - 401: Not authenticated
@@ -45,6 +45,7 @@ export const POST: APIRoute = async ({ locals, cookies }) => {
       }
     );
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error("Unexpected error in POST /api/auth/logout:", error);
 
     // Handle AuthServiceError
@@ -88,4 +89,3 @@ export const POST: APIRoute = async ({ locals, cookies }) => {
     );
   }
 };
-

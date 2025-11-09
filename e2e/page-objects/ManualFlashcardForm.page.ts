@@ -1,4 +1,5 @@
-import type { Page, Locator } from '@playwright/test';
+import type { Page, Locator } from "@playwright/test";
+import { expect } from "@playwright/test";
 
 export class ManualFlashcardFormPage {
   readonly page: Page;
@@ -10,8 +11,8 @@ export class ManualFlashcardFormPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.frontTextarea = page.locator('#front');
-    this.backTextarea = page.locator('#back');
+    this.frontTextarea = page.locator("#front");
+    this.backTextarea = page.locator("#back");
     this.submitButton = page.locator('[data-test-id="submit-button"]');
     this.successMessage = page.locator('[data-test-id="success-message-section"]');
     this.errorMessage = page.locator('[role="alert"]').filter({ hasText: /error|failed/i });
@@ -25,8 +26,25 @@ export class ManualFlashcardFormPage {
     await this.backTextarea.fill(value);
   }
 
+  async clearFront() {
+    await this.frontTextarea.clear();
+  }
+
+  async clearBack() {
+    await this.backTextarea.clear();
+  }
+
   async submit() {
+    // Wait for button to be enabled before clicking
+    await this.submitButton.waitFor({ state: "visible" });
+    await expect(this.submitButton).not.toBeDisabled({ timeout: 5000 });
     await this.submitButton.click();
+  }
+
+  async waitForValidation() {
+    // Wait for React to process form validation
+    // This gives time for the submit button state to update
+    await this.page.waitForTimeout(200);
   }
 
   async getFrontValue() {
@@ -42,7 +60,7 @@ export class ManualFlashcardFormPage {
   }
 
   async waitForSuccessMessage() {
-    await this.successMessage.waitFor({ state: 'visible' });
+    await this.successMessage.waitFor({ state: "visible" });
   }
 
   async getSuccessMessageText() {
@@ -54,11 +72,10 @@ export class ManualFlashcardFormPage {
   }
 
   async clickCreateAnother() {
-    await this.page.getByRole('button', { name: /create another/i }).click();
+    await this.page.getByRole("button", { name: /create another/i }).click();
   }
 
   async clickGoToHome() {
-    await this.page.getByRole('button', { name: /go to home/i }).click();
+    await this.page.getByRole("button", { name: /go to home/i }).click();
   }
 }
-

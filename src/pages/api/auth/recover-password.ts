@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
 import { z } from "zod";
-import { recoverPassword, AuthServiceError } from "@/lib/services/authService";
+import { recoverPassword } from "@/lib/services/authService";
 
 export const prerender = false;
 
@@ -13,17 +13,17 @@ const recoverPasswordSchema = z.object({
 
 /**
  * POST /api/auth/recover-password
- * 
+ *
  * Initiates the password recovery process by sending a recovery email.
- * 
+ *
  * Request Body:
  * - email: string (valid email format)
- * 
+ *
  * Responses:
  * - 200: Recovery email sent (or would be sent if email exists)
  * - 400: Invalid request data
  * - 500: Server error
- * 
+ *
  * Note: For security reasons, always returns 200 even if email doesn't exist
  */
 export const POST: APIRoute = async ({ request, locals }) => {
@@ -32,7 +32,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     let body;
     try {
       body = await request.json();
-    } catch (error) {
+    } catch {
       return new Response(
         JSON.stringify({
           error: "Invalid JSON in request body",
@@ -85,6 +85,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       }
     );
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error("Unexpected error in POST /api/auth/recover-password:", error);
 
     // Even for errors, we return a generic success message for security
@@ -100,4 +101,3 @@ export const POST: APIRoute = async ({ request, locals }) => {
     );
   }
 };
-
