@@ -1,4 +1,5 @@
 import type { Page, Locator } from "@playwright/test";
+import { expect } from "@playwright/test";
 
 export class ManualFlashcardFormPage {
   readonly page: Page;
@@ -25,8 +26,25 @@ export class ManualFlashcardFormPage {
     await this.backTextarea.fill(value);
   }
 
+  async clearFront() {
+    await this.frontTextarea.clear();
+  }
+
+  async clearBack() {
+    await this.backTextarea.clear();
+  }
+
   async submit() {
+    // Wait for button to be enabled before clicking
+    await this.submitButton.waitFor({ state: "visible" });
+    await expect(this.submitButton).not.toBeDisabled({ timeout: 5000 });
     await this.submitButton.click();
+  }
+
+  async waitForValidation() {
+    // Wait for React to process form validation
+    // This gives time for the submit button state to update
+    await this.page.waitForTimeout(200);
   }
 
   async getFrontValue() {

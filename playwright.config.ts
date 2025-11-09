@@ -40,4 +40,8 @@ export default defineConfig({
       use: { ...devices["Desktop Chrome"] },
     },
   ],
+
+  // Use a single worker to prevent race conditions with shared test user
+  // This ensures tests run sequentially while still running all tests even if one fails
+  workers: 1,
 });

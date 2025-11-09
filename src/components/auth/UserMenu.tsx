@@ -44,7 +44,11 @@ export function UserMenu({ user }: UserMenuProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="gap-2">
+        <Button
+          variant="ghost"
+          className="gap-2"
+          data-test-id="user-menu-button" 
+        >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="20"
@@ -75,6 +79,7 @@ export function UserMenu({ user }: UserMenuProps) {
         <DropdownMenuItem
           onClick={handleLogout}
           disabled={isLoggingOut}
+          data-test-id="logout-button" 
           className="cursor-pointer text-destructive focus:text-destructive"
         >
           {isLoggingOut ? "Logging out..." : "Log out"}
