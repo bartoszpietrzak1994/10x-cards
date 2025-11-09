@@ -48,4 +48,3 @@ export class UserMenuPage {
     await this.page.waitForURL(/.*\/auth\/login/);
   }
 }
-

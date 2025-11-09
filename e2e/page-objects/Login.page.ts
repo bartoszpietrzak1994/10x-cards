@@ -26,10 +26,10 @@ export class LoginPage {
     // Wait for inputs to be ready and interactive
     await this.emailInput.waitFor({ state: "visible" });
     await this.passwordInput.waitFor({ state: "visible" });
-    
+
     // Wait for React hydration by waiting for the form to be interactive
     await this.page.waitForLoadState("networkidle");
-    
+
     // Fill email with retry logic
     for (let i = 0; i < 3; i++) {
       await this.emailInput.clear();
@@ -41,7 +41,7 @@ export class LoginPage {
         throw new Error(`Failed to fill email field after 3 attempts. Current value: "${emailValue}"`);
       }
     }
-    
+
     // Fill password with retry logic
     for (let i = 0; i < 3; i++) {
       await this.passwordInput.clear();
@@ -53,7 +53,7 @@ export class LoginPage {
         throw new Error(`Failed to fill password field after 3 attempts. Current value: "${passwordValue}"`);
       }
     }
-    
+
     await this.submitButton.click();
   }
 
