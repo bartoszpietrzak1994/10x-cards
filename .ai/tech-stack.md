@@ -19,9 +19,8 @@ AI
   - Ustawianie limitów finansowych dla kluczy API,
   - Optymalizację kosztów przy zachowaniu wysokiej efektywności.
 
-CI/CD i Hosting
+CI/CD
 - Github Actions – automatyzacja pipeline'ów CI/CD.
-- DigitalOcean – hosting aplikacji za pomocą kontenerów Docker, gwarantujący skalowalność i niezawodność.
 
 Testowanie
 - Vitest – szybki test runner do testów jednostkowych i integracyjnych, zintegrowany z Vite/Astro.
@@ -33,3 +32,9 @@ Testowanie
 - Playwright – nowoczesny framework do testów E2E z wsparciem dla wielu przeglądarek.
 - c8/istanbul – narzędzia do raportowania pokrycia kodu testami.
 - Codecov/Coveralls – hosting i raportowanie pokrycia kodu.
+
+Deployments & Releases
+- Cloudflare Pages – platforma hostingowa dla aplikacji Astro SSR, wybrana ze względu na:
+  - Najlepszy stosunek ceny do wydajności ($20/miesiąc dla całego zespołu, nie per użytkownika),
+  - Unlimited requests i dozwolone komercyjne użycie na wszystkich planach,
+  - Globalną sieć CDN i edge computing zapewniającą niskie opóźnienia na całym świecie.
