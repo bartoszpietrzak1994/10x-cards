@@ -16,8 +16,6 @@ jobs:
   test-and-build:
     name: Run unit tests and production build
     runs-on: ubuntu-latest
-    env:
-      NODE_ENV: production
 
     steps:
       - name: Checkout repository
@@ -33,11 +31,16 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Verify Vitest installation
+        run: npx vitest --version
+
       - name: Run unit tests (Vitest)
         run: npm run test:run
 
       - name: Build (Astro production)
         run: npm run build
+        env:
+          NODE_ENV: production
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
