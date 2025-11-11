@@ -1,8 +1,14 @@
 ---
-import Welcome from "../components/Welcome.astro";
-import Layout from "../layouts/Layout.astro";
----
+export const prerender = false;
 
-<Layout>
-  <Welcome />
-</Layout>
+// Get authenticated user from middleware
+const user = Astro.locals.user;
+
+// Redirect to flashcards creation page if authenticated
+// Otherwise redirect to login with redirect back to flashcards
+if (user) {
+  return Astro.redirect("/flashcards/create");
+} else {
+  return Astro.redirect("/auth/login?redirect=/flashcards/create");
+}
+---
