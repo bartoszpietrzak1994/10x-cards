@@ -39,7 +39,7 @@ const user = Astro.locals.user;
     <header
       class="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
     >
-      <div class="container flex h-14 max-w-screen-2xl items-center">
+      <div class="container flex h-14 max-w-screen-2xl items-center px-6">
         <div class="mr-4 flex">
           <a href="/" class="mr-6 flex items-center space-x-2">
             <span class="font-bold text-lg">10xCards</span>
@@ -50,6 +50,11 @@ const user = Astro.locals.user;
             {
               user ? (
                 <>
+                  <a href="/flashcards">
+                    <Button variant="ghost" size="sm">
+                      My Flashcards
+                    </Button>
+                  </a>
                   <a href="/flashcards/create">
                     <Button variant="ghost" size="sm">
                       Create Flashcard
@@ -80,7 +85,7 @@ const user = Astro.locals.user;
         </div>
       </div>
     </header>
-    <main>
+    <main class="container mx-auto px-6 py-6 max-w-screen-2xl">
       <slot />
     </main>
   </body>

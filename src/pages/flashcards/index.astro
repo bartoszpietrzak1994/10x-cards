@@ -1,0 +1,17 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { FlashcardsDashboard } from "@/components/flashcards/FlashcardsDashboard";
+
+// Protect this page - only authenticated users can access
+const user = Astro.locals.user;
+if (!user) {
+  return Astro.redirect("/auth/login");
+}
+---
+
+<Layout title="Flashcards | 10xCards">
+  <div class="container py-8 max-w-screen-2xl">
+    <FlashcardsDashboard client:load />
+  </div>
+</Layout>
+

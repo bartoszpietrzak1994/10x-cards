@@ -104,7 +104,10 @@ export const getFlashcardsQuerySchema = z.object({
   limit: z.coerce.number().int().positive().max(100).default(10),
   sortBy: z.enum(["created_at", "front", "back"]).default("created_at"),
   order: z.enum(["asc", "desc"]).default("desc"),
-  flashcard_type: z.enum(["manual", "ai-generated", "ai-edited", "ai-proposal"]).optional(),
+  flashcard_type: z
+    .enum(["manual", "ai-generated", "ai-edited", "ai-proposal"])
+    .nullish()
+    .transform((val) => (val === null ? undefined : val)),
 });
 
 /**
