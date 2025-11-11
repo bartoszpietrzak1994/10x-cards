@@ -1,6 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { createManualFlashcard, deleteFlashcard, updateFlashcard, FlashcardServiceError } from "./flashcardService";
+import {
+  createManualFlashcard,
+  deleteFlashcard,
+  updateFlashcard,
+  getFlashcards,
+  FlashcardServiceError,
+  type GetFlashcardsQuery,
+} from "./flashcardService";
 import type { SupabaseClient } from "../db/supabase.client";
 import type { CreateManualFlashcardCommand, UpdateFlashcardCommand, FlashcardDTO } from "@/types";
 
@@ -712,6 +719,438 @@ describe("FlashcardService", () => {
         "code",
         "NO_DATA_RETURNED"
       );
+    });
+  });
+
+  describe("getFlashcards", () => {
+    const userId = "user-123";
+
+    it("should successfully retrieve flashcards with default pagination", async () => {
+      // Arrange
+      const query: GetFlashcardsQuery = {
+        page: 1,
+        limit: 10,
+        sortBy: "created_at",
+        order: "desc",
+      };
+
+      const mockFlashcards = [
+        {
+          id: 1,
+          front: "Question 1",
+          back: "Answer 1",
+          flashcard_type: "manual" as const,
+          created_at: "2024-01-01T00:00:00Z",
+          ai_generation_id: null,
+        },
+        {
+          id: 2,
+          front: "Question 2",
+          back: "Answer 2",
+          flashcard_type: "ai-generated" as const,
+          created_at: "2024-01-02T00:00:00Z",
+          ai_generation_id: 1,
+        },
+      ];
+
+      const mockFrom = vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            order: vi.fn().mockReturnValue({
+              range: vi.fn().mockResolvedValue({
+                data: mockFlashcards,
+                error: null,
+                count: 2,
+              }),
+            }),
+          }),
+        }),
+      });
+
+      vi.spyOn(mockSupabase, "from").mockImplementation(mockFrom);
+
+      // Act
+      const result = await getFlashcards(mockSupabase, userId, query);
+
+      // Assert
+      expect(result.flashcards).toHaveLength(2);
+      expect(result.flashcards[0]).toEqual(mockFlashcards[0]);
+      expect(result.pagination).toEqual({
+        page: 1,
+        pageSize: 10,
+        total: 2,
+      });
+      expect(mockSupabase.from).toHaveBeenCalledWith("flashcards");
+    });
+
+    it("should successfully retrieve flashcards with pagination (page 2)", async () => {
+      // Arrange
+      const query: GetFlashcardsQuery = {
+        page: 2,
+        limit: 10,
+        sortBy: "created_at",
+        order: "desc",
+      };
+
+      const mockFlashcards = [
+        {
+          id: 11,
+          front: "Question 11",
+          back: "Answer 11",
+          flashcard_type: "manual" as const,
+          created_at: "2024-01-11T00:00:00Z",
+          ai_generation_id: null,
+        },
+      ];
+
+      const mockFrom = vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            order: vi.fn().mockReturnValue({
+              range: vi.fn().mockResolvedValue({
+                data: mockFlashcards,
+                error: null,
+                count: 15,
+              }),
+            }),
+          }),
+        }),
+      });
+
+      vi.spyOn(mockSupabase, "from").mockImplementation(mockFrom);
+
+      // Act
+      const result = await getFlashcards(mockSupabase, userId, query);
+
+      // Assert
+      expect(result.flashcards).toHaveLength(1);
+      expect(result.pagination).toEqual({
+        page: 2,
+        pageSize: 10,
+        total: 15,
+      });
+    });
+
+    it("should filter flashcards by flashcard_type", async () => {
+      // Arrange
+      const query: GetFlashcardsQuery = {
+        page: 1,
+        limit: 10,
+        sortBy: "created_at",
+        order: "desc",
+        flashcard_type: "manual",
+      };
+
+      const mockFlashcards = [
+        {
+          id: 1,
+          front: "Question 1",
+          back: "Answer 1",
+          flashcard_type: "manual" as const,
+          created_at: "2024-01-01T00:00:00Z",
+          ai_generation_id: null,
+        },
+      ];
+
+      const mockRange = vi.fn().mockResolvedValue({
+        data: mockFlashcards,
+        error: null,
+        count: 1,
+      });
+
+      const mockOrder = vi.fn().mockReturnValue({
+        range: mockRange,
+      });
+
+      const mockEq2 = vi.fn().mockReturnValue({
+        order: mockOrder,
+      });
+
+      const mockEq1 = vi.fn().mockReturnValue({
+        eq: mockEq2,
+      });
+
+      const mockSelect = vi.fn().mockReturnValue({
+        eq: mockEq1,
+      });
+
+      const mockFrom = vi.fn().mockReturnValue({
+        select: mockSelect,
+      });
+
+      vi.spyOn(mockSupabase, "from").mockImplementation(mockFrom);
+
+      // Act
+      const result = await getFlashcards(mockSupabase, userId, query);
+
+      // Assert
+      expect(result.flashcards).toHaveLength(1);
+      expect(result.flashcards[0].flashcard_type).toBe("manual");
+      expect(mockEq2).toHaveBeenCalledWith("flashcard_type", "manual");
+    });
+
+    it("should sort flashcards in ascending order", async () => {
+      // Arrange
+      const query: GetFlashcardsQuery = {
+        page: 1,
+        limit: 10,
+        sortBy: "created_at",
+        order: "asc",
+      };
+
+      const mockFlashcards = [
+        {
+          id: 1,
+          front: "Question 1",
+          back: "Answer 1",
+          flashcard_type: "manual" as const,
+          created_at: "2024-01-01T00:00:00Z",
+          ai_generation_id: null,
+        },
+      ];
+
+      const mockRange = vi.fn().mockResolvedValue({
+        data: mockFlashcards,
+        error: null,
+        count: 1,
+      });
+
+      const mockOrder = vi.fn().mockReturnValue({
+        range: mockRange,
+      });
+
+      const mockFrom = vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            order: mockOrder,
+          }),
+        }),
+      });
+
+      vi.spyOn(mockSupabase, "from").mockImplementation(mockFrom);
+
+      // Act
+      await getFlashcards(mockSupabase, userId, query);
+
+      // Assert
+      expect(mockOrder).toHaveBeenCalledWith("created_at", { ascending: true });
+    });
+
+    it("should sort flashcards by front field", async () => {
+      // Arrange
+      const query: GetFlashcardsQuery = {
+        page: 1,
+        limit: 10,
+        sortBy: "front",
+        order: "asc",
+      };
+
+      const mockFlashcards = [
+        {
+          id: 1,
+          front: "A Question",
+          back: "Answer 1",
+          flashcard_type: "manual" as const,
+          created_at: "2024-01-01T00:00:00Z",
+          ai_generation_id: null,
+        },
+      ];
+
+      const mockRange = vi.fn().mockResolvedValue({
+        data: mockFlashcards,
+        error: null,
+        count: 1,
+      });
+
+      const mockOrder = vi.fn().mockReturnValue({
+        range: mockRange,
+      });
+
+      const mockFrom = vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            order: mockOrder,
+          }),
+        }),
+      });
+
+      vi.spyOn(mockSupabase, "from").mockImplementation(mockFrom);
+
+      // Act
+      await getFlashcards(mockSupabase, userId, query);
+
+      // Assert
+      expect(mockOrder).toHaveBeenCalledWith("front", { ascending: true });
+    });
+
+    it("should return empty array when user has no flashcards", async () => {
+      // Arrange
+      const query: GetFlashcardsQuery = {
+        page: 1,
+        limit: 10,
+        sortBy: "created_at",
+        order: "desc",
+      };
+
+      const mockFrom = vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            order: vi.fn().mockReturnValue({
+              range: vi.fn().mockResolvedValue({
+                data: [],
+                error: null,
+                count: 0,
+              }),
+            }),
+          }),
+        }),
+      });
+
+      vi.spyOn(mockSupabase, "from").mockImplementation(mockFrom);
+
+      // Act
+      const result = await getFlashcards(mockSupabase, userId, query);
+
+      // Assert
+      expect(result.flashcards).toEqual([]);
+      expect(result.pagination).toEqual({
+        page: 1,
+        pageSize: 10,
+        total: 0,
+      });
+    });
+
+    it("should return empty array when data is null", async () => {
+      // Arrange
+      const query: GetFlashcardsQuery = {
+        page: 1,
+        limit: 10,
+        sortBy: "created_at",
+        order: "desc",
+      };
+
+      const mockFrom = vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            order: vi.fn().mockReturnValue({
+              range: vi.fn().mockResolvedValue({
+                data: null,
+                error: null,
+                count: 0,
+              }),
+            }),
+          }),
+        }),
+      });
+
+      vi.spyOn(mockSupabase, "from").mockImplementation(mockFrom);
+
+      // Act
+      const result = await getFlashcards(mockSupabase, userId, query);
+
+      // Assert
+      expect(result.flashcards).toEqual([]);
+      expect(result.pagination.total).toBe(0);
+    });
+
+    it("should throw FlashcardServiceError with INVALID_USER_ID when userId is empty", async () => {
+      // Arrange
+      const query: GetFlashcardsQuery = {
+        page: 1,
+        limit: 10,
+        sortBy: "created_at",
+        order: "desc",
+      };
+
+      // Act & Assert
+      await expect(getFlashcards(mockSupabase, "", query)).rejects.toThrow(FlashcardServiceError);
+
+      await expect(getFlashcards(mockSupabase, "", query)).rejects.toHaveProperty("code", "INVALID_USER_ID");
+    });
+
+    it("should throw FlashcardServiceError with INVALID_USER_ID when userId is not a string", async () => {
+      // Arrange
+      const query: GetFlashcardsQuery = {
+        page: 1,
+        limit: 10,
+        sortBy: "created_at",
+        order: "desc",
+      };
+
+      // Act & Assert
+      await expect(getFlashcards(mockSupabase, null as any, query)).rejects.toThrow(FlashcardServiceError);
+
+      await expect(getFlashcards(mockSupabase, null as any, query)).rejects.toHaveProperty("code", "INVALID_USER_ID");
+    });
+
+    it("should throw FlashcardServiceError with DATABASE_ERROR when query fails", async () => {
+      // Arrange
+      const query: GetFlashcardsQuery = {
+        page: 1,
+        limit: 10,
+        sortBy: "created_at",
+        order: "desc",
+      };
+
+      const mockFrom = vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            order: vi.fn().mockReturnValue({
+              range: vi.fn().mockResolvedValue({
+                data: null,
+                error: {
+                  code: "PGRST301",
+                  message: "Database connection error",
+                } as any,
+                count: null,
+              }),
+            }),
+          }),
+        }),
+      });
+
+      vi.spyOn(mockSupabase, "from").mockImplementation(mockFrom);
+
+      // Act & Assert
+      await expect(getFlashcards(mockSupabase, userId, query)).rejects.toThrow(FlashcardServiceError);
+
+      await expect(getFlashcards(mockSupabase, userId, query)).rejects.toHaveProperty("code", "DATABASE_ERROR");
+    });
+
+    it("should calculate correct offset for pagination", async () => {
+      // Arrange
+      const query: GetFlashcardsQuery = {
+        page: 3,
+        limit: 5,
+        sortBy: "created_at",
+        order: "desc",
+      };
+
+      const mockRange = vi.fn().mockResolvedValue({
+        data: [],
+        error: null,
+        count: 0,
+      });
+
+      const mockFrom = vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            order: vi.fn().mockReturnValue({
+              range: mockRange,
+            }),
+          }),
+        }),
+      });
+
+      vi.spyOn(mockSupabase, "from").mockImplementation(mockFrom);
+
+      // Act
+      await getFlashcards(mockSupabase, userId, query);
+
+      // Assert
+      // Page 3 with limit 5 should start at offset 10 (page-1 * limit = 2 * 5 = 10)
+      // and end at 14 (offset + limit - 1 = 10 + 5 - 1 = 14)
+      expect(mockRange).toHaveBeenCalledWith(10, 14);
     });
   });
 

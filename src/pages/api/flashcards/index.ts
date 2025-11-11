@@ -1,8 +1,14 @@
 import type { APIRoute } from "astro";
 import { z } from "zod";
 
-import { createManualFlashcard, FlashcardServiceError } from "@/lib/services/flashcardService";
-import type { CreateManualFlashcardCommand, FlashcardDTO } from "@/types";
+import {
+  createManualFlashcard,
+  getFlashcards,
+  FlashcardServiceError,
+  type GetFlashcardsQuery,
+} from "@/lib/services/flashcardService";
+import { getFlashcardsQuerySchema } from "@/lib/validators/flashcardSchemas";
+import type { CreateManualFlashcardCommand, FlashcardDTO, FlashcardsListDTO } from "@/types";
 
 // Zod schema for input validation
 const createManualFlashcardSchema = z.object({
@@ -135,6 +141,133 @@ export const POST: APIRoute = async ({ request, locals }) => {
       return new Response(
         JSON.stringify({
           error: "Failed to create flashcard",
+          message: error.message,
+        }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Generic error response for unknown error types
+    return new Response(
+      JSON.stringify({
+        error: "Internal server error",
+        message: "An unexpected error occurred while processing your request",
+      }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+  }
+};
+
+/**
+ * GET /api/flashcards
+ * Retrieves a paginated list of flashcards for the authenticated user.
+ *
+ * Query Parameters:
+ * - page (number, default: 1): The page number for pagination
+ * - limit (number, default: 10, max: 100): The number of flashcards per page
+ * - sortBy (string, default: "created_at"): Field to sort by (created_at, front, back)
+ * - order (string, default: "desc"): Sort order (asc or desc)
+ * - flashcard_type (string, optional): Filter by flashcard type (manual, ai-generated, ai-edited, ai-proposal)
+ *
+ * @returns 200 OK with FlashcardsListDTO (flashcards array and pagination metadata)
+ * @throws 400 Bad Request if query parameters are invalid
+ * @throws 401 Unauthorized if user is not authenticated
+ * @throws 500 Internal Server Error for unexpected errors
+ */
+export const GET: APIRoute = async ({ request, locals }) => {
+  try {
+    // Step 1: Check authentication
+    if (!locals.user) {
+      return new Response(
+        JSON.stringify({
+          error: "Unauthorized",
+          message: "You must be logged in to view flashcards",
+        }),
+        {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    const userId = locals.user.id;
+    const supabase = locals.supabase;
+
+    // Step 2: Parse and validate query parameters
+    const url = new URL(request.url);
+    const queryParams = {
+      page: url.searchParams.get("page"),
+      limit: url.searchParams.get("limit"),
+      sortBy: url.searchParams.get("sortBy"),
+      order: url.searchParams.get("order"),
+      flashcard_type: url.searchParams.get("flashcard_type"),
+    };
+
+    const validationResult = getFlashcardsQuerySchema.safeParse(queryParams);
+
+    if (!validationResult.success) {
+      const errorMessages = validationResult.error.errors.map((err) => `${err.path.join(".")}: ${err.message}`);
+
+      return new Response(
+        JSON.stringify({
+          error: "Invalid query parameters",
+          details: errorMessages,
+        }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    const validatedQuery = validationResult.data as GetFlashcardsQuery;
+
+    // Step 3: Fetch flashcards using service layer
+    const result: FlashcardsListDTO = await getFlashcards(supabase, userId, validatedQuery);
+
+    // Step 4: Return success response with flashcards list
+    return new Response(JSON.stringify(result), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (error) {
+    // Global error handler
+    // eslint-disable-next-line no-console
+    console.error("Unexpected error in get flashcards endpoint:", error);
+
+    // Handle FlashcardServiceError with specific error codes
+    if (error instanceof FlashcardServiceError) {
+      // Map error codes to HTTP status codes
+      const statusCodeMap: Record<string, number> = {
+        INVALID_USER_ID: 400,
+        DATABASE_ERROR: 500,
+      };
+
+      const statusCode = statusCodeMap[error.code] || 500;
+
+      return new Response(
+        JSON.stringify({
+          error: error.message,
+          code: error.code,
+        }),
+        {
+          status: statusCode,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Handle generic Error instances
+    if (error instanceof Error) {
+      return new Response(
+        JSON.stringify({
+          error: "Failed to fetch flashcards",
           message: error.message,
         }),
         {

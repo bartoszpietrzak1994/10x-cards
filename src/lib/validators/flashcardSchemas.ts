@@ -97,6 +97,17 @@ export type AIGenerationInput = z.infer<typeof aiGenerationInputSchema>;
 export type EditFlashcardProposalInput = z.infer<typeof editFlashcardProposalSchema>;
 
 /**
+ * Schema for getting a list of flashcards with pagination and filters
+ */
+export const getFlashcardsQuerySchema = z.object({
+  page: z.coerce.number().int().positive().default(1),
+  limit: z.coerce.number().int().positive().max(100).default(10),
+  sortBy: z.enum(["created_at", "front", "back"]).default("created_at"),
+  order: z.enum(["asc", "desc"]).default("desc"),
+  flashcard_type: z.enum(["manual", "ai-generated", "ai-edited", "ai-proposal"]).optional(),
+});
+
+/**
  * Validation helper for field-level validation
  */
 export function validateFlashcardField(field: "front" | "back", value: string): { isValid: boolean; error?: string } {

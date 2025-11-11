@@ -1,6 +1,11 @@
 import type { Database } from "@/db/database.types";
 import type { SupabaseClient } from "../../db/supabase.client";
-import type { CreateManualFlashcardCommand, FlashcardDTO, UpdateFlashcardCommand } from "../../types";
+import type {
+  CreateManualFlashcardCommand,
+  FlashcardDTO,
+  UpdateFlashcardCommand,
+  FlashcardsListDTO,
+} from "../../types";
 
 /**
  * Custom error class for flashcard service errors
@@ -295,4 +300,101 @@ export async function updateFlashcard(
   };
 
   return flashcardDTO;
+}
+
+/**
+ * Interface for query parameters when fetching flashcards
+ */
+export interface GetFlashcardsQuery {
+  page: number;
+  limit: number;
+  sortBy: "created_at" | "front" | "back";
+  order: "asc" | "desc";
+  flashcard_type?: "manual" | "ai-generated" | "ai-edited" | "ai-proposal";
+}
+
+/**
+ * Retrieves a paginated list of flashcards for a user with optional filtering and sorting.
+ *
+ * This function handles the business logic for fetching flashcards,
+ * including pagination, filtering by flashcard type, and custom sorting.
+ *
+ * @param supabase - Supabase client instance
+ * @param userId - ID of the user whose flashcards to retrieve
+ * @param query - Query parameters for pagination, sorting, and filtering
+ * @returns Promise resolving to a paginated list of flashcards with metadata
+ * @throws FlashcardServiceError if database operation fails
+ */
+export async function getFlashcards(
+  supabase: SupabaseClient,
+  userId: string,
+  query: GetFlashcardsQuery
+): Promise<FlashcardsListDTO> {
+  // Validate user ID format
+  if (!userId || typeof userId !== "string") {
+    throw new FlashcardServiceError("Invalid user ID provided", "INVALID_USER_ID");
+  }
+
+  // Calculate pagination offset
+  const offset = (query.page - 1) * query.limit;
+
+  // Build the base query
+  let queryBuilder = supabase
+    .from("flashcards")
+    .select("id, front, back, flashcard_type, created_at, ai_generation_id", { count: "exact" })
+    .eq("user_id", userId);
+
+  // Apply flashcard_type filter if provided
+  if (query.flashcard_type) {
+    queryBuilder = queryBuilder.eq("flashcard_type", query.flashcard_type);
+  }
+
+  // Apply sorting
+  queryBuilder = queryBuilder.order(query.sortBy, { ascending: query.order === "asc" });
+
+  // Apply pagination
+  queryBuilder = queryBuilder.range(offset, offset + query.limit - 1);
+
+  // Execute the query
+  const { data: flashcardsData, error: flashcardsError, count } = await queryBuilder;
+
+  // Handle database errors
+  if (flashcardsError) {
+    // eslint-disable-next-line no-console
+    console.error("Database error while fetching flashcards:", {
+      error: flashcardsError,
+      userId,
+      query,
+    });
+
+    throw new FlashcardServiceError(
+      flashcardsError.message || "Failed to fetch flashcards",
+      "DATABASE_ERROR",
+      flashcardsError
+    );
+  }
+
+  // Handle case where no data is returned (this is actually valid - user might have no flashcards)
+  const flashcards: FlashcardDTO[] = flashcardsData
+    ? flashcardsData.map((card) => ({
+        id: card.id,
+        front: card.front,
+        back: card.back,
+        flashcard_type: card.flashcard_type,
+        created_at: card.created_at,
+        ai_generation_id: card.ai_generation_id,
+      }))
+    : [];
+
+  // Construct the response with pagination metadata
+  const result: FlashcardsListDTO = {
+    flashcards,
+    pagination: {
+      page: query.page,
+      pageSize: query.limit,
+      total: count || 0,
+    },
+  };
+
+  return result;
 }
