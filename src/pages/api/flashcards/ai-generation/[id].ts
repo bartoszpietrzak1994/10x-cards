@@ -107,9 +107,6 @@ export const GET: APIRoute = async ({ params, locals }) => {
       status = "completed";
     }
 
-    // eslint-disable-next-line no-console
-    console.log("[AI Generation GET API] Generation ID:", generationId, "Status:", status, "response_time:", generationMeta.response_time);
-
     // Step 7: Return response
     return new Response(
       JSON.stringify({

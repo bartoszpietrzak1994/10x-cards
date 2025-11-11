@@ -244,9 +244,6 @@ async function processAIResponse(
     }
 
     // Update flashcards_ai_generation record with metadata
-    // eslint-disable-next-line no-console
-    console.log("[aiGenerationService] Updating generation record:", generationId, "with response_time:", metadata.responseTime);
-    
     const { error: generationError } = await supabase
       .from("flashcards_ai_generation")
       .update({
@@ -258,13 +255,8 @@ async function processAIResponse(
       .eq("id", generationId);
 
     if (generationError) {
-      // eslint-disable-next-line no-console
-      console.error("[aiGenerationService] Failed to update generation record:", generationError);
       throw new Error(`Failed to update generation record: ${generationError.message}`);
     }
-    
-    // eslint-disable-next-line no-console
-    console.log("[aiGenerationService] Successfully updated generation record");
 
     // Update ai_logs record with timing and token information
     const { error: logError } = await supabase

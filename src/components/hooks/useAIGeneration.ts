@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useRef } from "react";
 import { createAIGenerationClientService } from "@/lib/services/aiGenerationClientService";
 import { usePolling } from "./usePolling";
 import { useProposalEditing } from "./useProposalEditing";
@@ -63,6 +63,9 @@ export function useAIGeneration() {
   // Service instance
   const service = useMemo(() => createAIGenerationClientService(), []);
 
+  // Ref to store current generation ID (avoids closure issues)
+  const generationIdRef = useRef<number | undefined>(undefined);
+
   // Main state
   const [vm, setVm] = useState<AIGenerationVM>({
     inputText: "",
@@ -93,25 +96,14 @@ export function useAIGeneration() {
    */
   const fetchAndUpdateData = useCallback(
     async (generationId: number) => {
-      // eslint-disable-next-line no-console
-      console.log("[useAIGeneration] Fetching data for generation ID:", generationId);
-      
       const data = await service.fetchGenerationData(generationId);
 
-      // eslint-disable-next-line no-console
-      console.log("[useAIGeneration] Received data, status:", data.status);
-
-      setVm((prev) => {
-        // eslint-disable-next-line no-console
-        console.log("[useAIGeneration] Updating VM, prev status:", prev.status, "new status:", data.status);
-        
-        return {
-          ...prev,
-          status: data.status,
-          aiLog: data.aiLog || undefined,
-          generationMeta: data.generationMeta || undefined,
-        };
-      });
+      setVm((prev) => ({
+        ...prev,
+        status: data.status,
+        aiLog: data.aiLog || undefined,
+        generationMeta: data.generationMeta || undefined,
+      }));
 
       if (data.proposals) {
         updateProposals(data.proposals);
@@ -127,8 +119,9 @@ export function useAIGeneration() {
    */
   const { start: startPolling } = usePolling({
     fetcher: async () => {
-      if (!vm.generationId) throw new Error("No generation ID");
-      return await fetchAndUpdateData(vm.generationId);
+      const currentGenerationId = generationIdRef.current;
+      if (!currentGenerationId) throw new Error("No generation ID");
+      return await fetchAndUpdateData(currentGenerationId);
     },
     interval: POLLING_CONFIG.INTERVAL,
     maxTime: POLLING_CONFIG.MAX_TIME,
@@ -195,6 +188,9 @@ export function useAIGeneration() {
         input_text: vm.inputText,
       });
 
+      // Store generation ID in ref immediately (before state update)
+      generationIdRef.current = response.generation_id;
+
       setVm((prev) => ({
         ...prev,
         isSubmitting: false,
@@ -218,9 +214,10 @@ export function useAIGeneration() {
    * Manually refreshes generation data
    */
   const refresh = useCallback(async () => {
-    if (!vm.generationId) return;
-    await fetchAndUpdateData(vm.generationId);
-  }, [vm.generationId, fetchAndUpdateData]);
+    const currentGenerationId = generationIdRef.current;
+    if (!currentGenerationId) return;
+    await fetchAndUpdateData(currentGenerationId);
+  }, [fetchAndUpdateData]);
 
   /**
    * Saves edited proposal

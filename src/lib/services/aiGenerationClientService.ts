@@ -33,9 +33,6 @@ export class AIGenerationClientService {
    * Uses authenticated API endpoint to ensure proper RLS access
    */
   async fetchGenerationData(generationId: number) {
-    // eslint-disable-next-line no-console
-    console.log("[AIGenerationClientService] Fetching generation data for ID:", generationId);
-    
     const response = await fetch(`/api/flashcards/ai-generation/${generationId}`, {
       method: "GET",
       headers: {
@@ -43,9 +40,6 @@ export class AIGenerationClientService {
       },
       credentials: "same-origin", // Include cookies for authentication
     });
-
-    // eslint-disable-next-line no-console
-    console.log("[AIGenerationClientService] Response status:", response.status);
 
     if (!response.ok) {
       if (response.status === 401) {
@@ -58,11 +52,7 @@ export class AIGenerationClientService {
       throw new Error(errorData.message || `Failed to fetch generation data: ${response.status}`);
     }
 
-    const data = await response.json();
-    // eslint-disable-next-line no-console
-    console.log("[AIGenerationClientService] Received data:", data);
-    
-    return data;
+    return await response.json();
   }
 
   /**

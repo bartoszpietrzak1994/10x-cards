@@ -73,7 +73,8 @@ export function usePolling<T>({
    * Starts the polling process
    */
   const start = useCallback(() => {
-    if (!enabledRef.current) return;
+    // Note: Don't check enabledRef here - allow manual start
+    // The enabled prop controls whether polling continues via useEffect
 
     clearPolling();
     startTimeRef.current = Date.now();
@@ -98,9 +99,7 @@ export function usePolling<T>({
           clearPolling();
           onStop?.();
         }
-      } catch (error) {
-        // eslint-disable-next-line no-console
-        console.error("[usePolling] Error during poll:", error);
+      } catch {
         // Continue polling even if there's an error
       }
     };
