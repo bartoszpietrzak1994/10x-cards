@@ -3,8 +3,8 @@ import { createHash } from "crypto";
 import { z } from "zod";
 
 import { initiateAIGeneration } from "../../../lib/services/aiGenerationService";
+import { supabaseServiceClient } from "../../../db/supabase.client";
 import type { AIGenerationResponseDTO } from "../../../types";
-import { supabaseServiceClient } from "@/db/supabase.client";
 
 // Zod schema for input validation
 const initiateAIGenerationSchema = z.object({
@@ -113,8 +113,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const generationId = generationData.id;
 
     // Step 6: Insert record into ai_logs table
-    // Use service client to bypass RLS for ai_logs
-    const { error: logError } = await supabaseServiceClient.from("ai_logs").insert({
+    const { error: logError } = await supabase.from("ai_logs").insert({
       flashcards_generation_id: generationId,
       request_time: requestTime,
       input_length: inputLength,
@@ -130,7 +129,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
     // Step 7: Trigger asynchronous AI processing
     // Note: This is fire-and-forget - we don't await the result
     // In production, this would queue a background job
-    // Use service client to bypass RLS for AI-generated flashcards
+    // Use service client to bypass RLS for background operations
+    if (!supabaseServiceClient) {
+      throw new Error("Service role client not configured - cannot process AI generation");
+    }
+    
     initiateAIGeneration(supabaseServiceClient, generationId, input_text, userId).catch((error) => {
       // eslint-disable-next-line no-console
       console.error("Failed to initiate AI generation:", error);

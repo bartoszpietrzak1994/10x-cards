@@ -98,7 +98,9 @@ export function usePolling<T>({
           clearPolling();
           onStop?.();
         }
-      } catch {
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error("[usePolling] Error during poll:", error);
         // Continue polling even if there's an error
       }
     };

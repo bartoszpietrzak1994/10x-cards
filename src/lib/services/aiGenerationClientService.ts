@@ -1,12 +1,12 @@
-import type { SupabaseClient } from "@/db/supabase.client";
-import type { AIGenerationResponseDTO, AILogDTO, FlashcardProposal, InitiateAIGenerationCommand } from "@/types";
+import type { AIGenerationResponseDTO, InitiateAIGenerationCommand } from "@/types";
 
 /**
  * Client-side service for AI generation operations
  * Handles API calls and data fetching for AI flashcard generation
+ * All operations use authenticated API endpoints (not direct Supabase client)
  */
 export class AIGenerationClientService {
-  constructor(private supabase: SupabaseClient) {}
+  constructor() {}
 
   /**
    * Initiates a new AI generation request
@@ -29,87 +29,40 @@ export class AIGenerationClientService {
   }
 
   /**
-   * Fetches generation metadata
-   */
-  async fetchGenerationMeta(generationId: number) {
-    const { data, error } = await this.supabase
-      .from("flashcards_ai_generation")
-      .select("request_time, response_time, token_count, model, generated_flashcards_count")
-      .eq("id", generationId)
-      .single();
-
-    if (error) {
-      // eslint-disable-next-line no-console
-      console.error("Error fetching generation data:", error);
-      return null;
-    }
-
-    return data;
-  }
-
-  /**
-   * Fetches AI log for a generation
-   */
-  async fetchAILog(generationId: number): Promise<AILogDTO | null> {
-    const { data, error } = await this.supabase
-      .from("ai_logs")
-      .select("request_time, response_time, token_count, error_info")
-      .eq("flashcards_generation_id", generationId)
-      .single();
-
-    if (error) {
-      // eslint-disable-next-line no-console
-      console.error("Error fetching AI log:", error);
-      return null;
-    }
-
-    return data;
-  }
-
-  /**
-   * Fetches proposals for a generation
-   */
-  async fetchProposals(generationId: number): Promise<FlashcardProposal[]> {
-    const { data, error } = await this.supabase
-      .from("flashcards")
-      .select("id, front, back, flashcard_type, created_at, ai_generation_id")
-      .eq("ai_generation_id", generationId)
-      .in("flashcard_type", ["ai-generated", "ai-proposal"])
-      .order("created_at", { ascending: true });
-
-    if (error) {
-      // eslint-disable-next-line no-console
-      console.error("Error fetching proposals:", error);
-      return [];
-    }
-
-    return data || [];
-  }
-
-  /**
    * Fetches all generation data (meta, log, and proposals)
+   * Uses authenticated API endpoint to ensure proper RLS access
    */
   async fetchGenerationData(generationId: number) {
-    const [generationMeta, aiLog, proposals] = await Promise.all([
-      this.fetchGenerationMeta(generationId),
-      this.fetchAILog(generationId),
-      this.fetchProposals(generationId),
-    ]);
+    // eslint-disable-next-line no-console
+    console.log("[AIGenerationClientService] Fetching generation data for ID:", generationId);
+    
+    const response = await fetch(`/api/flashcards/ai-generation/${generationId}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "same-origin", // Include cookies for authentication
+    });
 
-    // Determine status
-    let status: "processing" | "completed" | "failed" = "processing";
-    if (aiLog?.error_info) {
-      status = "failed";
-    } else if (generationMeta?.response_time) {
-      status = "completed";
+    // eslint-disable-next-line no-console
+    console.log("[AIGenerationClientService] Response status:", response.status);
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error("You must be logged in to view generation data");
+      }
+      if (response.status === 404) {
+        throw new Error("Generation not found");
+      }
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `Failed to fetch generation data: ${response.status}`);
     }
 
-    return {
-      status,
-      generationMeta,
-      aiLog,
-      proposals,
-    };
+    const data = await response.json();
+    // eslint-disable-next-line no-console
+    console.log("[AIGenerationClientService] Received data:", data);
+    
+    return data;
   }
 
   /**
@@ -146,6 +99,6 @@ export class AIGenerationClientService {
 /**
  * Factory function to create AIGenerationClientService instance
  */
-export function createAIGenerationClientService(supabase: SupabaseClient): AIGenerationClientService {
-  return new AIGenerationClientService(supabase);
+export function createAIGenerationClientService(): AIGenerationClientService {
+  return new AIGenerationClientService();
 }

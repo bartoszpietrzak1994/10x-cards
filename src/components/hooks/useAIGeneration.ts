@@ -1,5 +1,4 @@
 import { useState, useCallback, useMemo } from "react";
-import { supabaseClient } from "@/db/supabase.client";
 import { createAIGenerationClientService } from "@/lib/services/aiGenerationClientService";
 import { usePolling } from "./usePolling";
 import { useProposalEditing } from "./useProposalEditing";
@@ -62,7 +61,7 @@ const INPUT_LIMITS = {
  */
 export function useAIGeneration() {
   // Service instance
-  const service = useMemo(() => createAIGenerationClientService(supabaseClient), []);
+  const service = useMemo(() => createAIGenerationClientService(), []);
 
   // Main state
   const [vm, setVm] = useState<AIGenerationVM>({
@@ -94,14 +93,25 @@ export function useAIGeneration() {
    */
   const fetchAndUpdateData = useCallback(
     async (generationId: number) => {
+      // eslint-disable-next-line no-console
+      console.log("[useAIGeneration] Fetching data for generation ID:", generationId);
+      
       const data = await service.fetchGenerationData(generationId);
 
-      setVm((prev) => ({
-        ...prev,
-        status: data.status,
-        aiLog: data.aiLog || undefined,
-        generationMeta: data.generationMeta || undefined,
-      }));
+      // eslint-disable-next-line no-console
+      console.log("[useAIGeneration] Received data, status:", data.status);
+
+      setVm((prev) => {
+        // eslint-disable-next-line no-console
+        console.log("[useAIGeneration] Updating VM, prev status:", prev.status, "new status:", data.status);
+        
+        return {
+          ...prev,
+          status: data.status,
+          aiLog: data.aiLog || undefined,
+          generationMeta: data.generationMeta || undefined,
+        };
+      });
 
       if (data.proposals) {
         updateProposals(data.proposals);

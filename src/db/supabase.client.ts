@@ -2,8 +2,9 @@ import { createClient, type SupabaseClient as SupabaseClientBase } from "@supaba
 
 import type { Database } from "./database.types.ts";
 
-const supabaseUrl = process.env.PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.PUBLIC_SUPABASE_ANON_KEY;
+const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
+const supabaseServiceKey = import.meta.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!supabaseUrl) {
   throw new Error("Missing environment variable: PUBLIC_SUPABASE_URL");
@@ -26,15 +27,18 @@ export const supabaseClient = createClient<Database>(supabaseUrl, supabaseAnonKe
 });
 
 /**
- * Service role client for server-side operations that bypass RLS.
- * Use this for trusted server-side operations like AI generation.
- * Currently uses the same key as anon client - for production, use separate SUPABASE_SERVICE_KEY.
+ * Service role client that bypasses RLS.
+ * ONLY use for trusted server-side operations (e.g., background jobs).
+ * NEVER expose this client to the frontend or use it for user-initiated requests.
  */
-export const supabaseServiceClient = createClient<Database>(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false,
-  },
-});
+export const supabaseServiceClient =
+  supabaseServiceKey
+    ? createClient<Database>(supabaseUrl, supabaseServiceKey, {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      })
+    : null;
 
 export type SupabaseClient = SupabaseClientBase<Database>;
