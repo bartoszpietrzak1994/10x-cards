@@ -511,12 +511,12 @@ describe("AIGenerationService", () => {
 
       // Act & Assert
       await expect(initiateAIGeneration(mockSupabase, generationId, validInputText, userId)).rejects.toThrow(
-        "API Error"
+        "AI service error: API Error"
       );
 
       // Assert error was logged
       expect(errorUpdates.length).toBeGreaterThan(0);
-      expect(errorUpdates[0].error_info).toBe("API Error");
+      expect(errorUpdates[0].error_info).toBe("AI service error: API Error");
     });
 
     it("should handle database error when inserting flashcards", async () => {
