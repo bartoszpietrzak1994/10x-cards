@@ -1,5 +1,4 @@
 import type { APIRoute } from "astro";
-import { createHash } from "crypto";
 import { z } from "zod";
 
 import { initiateAIGeneration } from "../../../lib/services/aiGenerationService";
@@ -115,8 +114,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    // Step 6: Generate MD5 hash of input text
-    const inputTextHash = createHash("md5").update(input_text).digest("hex");
+    // Step 6: Generate SHA-256 hash of input text (Web Crypto API - Cloudflare compatible)
+    const encoder = new TextEncoder();
+    const data = encoder.encode(input_text);
+    const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const inputTextHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    
     const inputLength = input_text.length;
     const requestTime = new Date().toISOString();
 
