@@ -80,12 +80,47 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     const userId = locals.user.id;
 
-    // Step 4: Generate MD5 hash of input text
+    // Step 4: Validate service client availability before processing
+    if (!supabaseServiceClient) {
+      return new Response(
+        JSON.stringify({
+          error: "Service unavailable",
+          message: "AI generation service is not properly configured. Please contact support.",
+        }),
+        {
+          status: 503,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Step 5: Validate OpenRouter configuration
+    try {
+      const openRouterApiKey = import.meta.env.OPENROUTER_API_KEY;
+      if (!openRouterApiKey) {
+        throw new Error("OPENROUTER_API_KEY not configured");
+      }
+    } catch (configError) {
+      // eslint-disable-next-line no-console
+      console.error("Configuration error:", configError);
+      return new Response(
+        JSON.stringify({
+          error: "Service unavailable",
+          message: "AI generation service is not properly configured. Please contact support.",
+        }),
+        {
+          status: 503,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Step 6: Generate MD5 hash of input text
     const inputTextHash = createHash("md5").update(input_text).digest("hex");
     const inputLength = input_text.length;
     const requestTime = new Date().toISOString();
 
-    // Step 5: Insert record into flashcards_ai_generation table
+    // Step 7: Insert record into flashcards_ai_generation table
     const { data: generationData, error: generationError } = await supabase
       .from("flashcards_ai_generation")
       .insert({
@@ -112,7 +147,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     const generationId = generationData.id;
 
-    // Step 6: Insert record into ai_logs table
+    // Step 8: Insert record into ai_logs table
     const { error: logError } = await supabase.from("ai_logs").insert({
       flashcards_generation_id: generationId,
       request_time: requestTime,
@@ -126,22 +161,28 @@ export const POST: APIRoute = async ({ request, locals }) => {
       // Continue despite log error - generation record is created
     }
 
-    // Step 7: Trigger asynchronous AI processing
+    // Step 9: Trigger asynchronous AI processing
     // Note: This is fire-and-forget - we don't await the result
     // In production, this would queue a background job
     // Use service client to bypass RLS for background operations
-    if (!supabaseServiceClient) {
-      throw new Error("Service role client not configured - cannot process AI generation");
-    }
-    
     initiateAIGeneration(supabaseServiceClient, generationId, input_text, userId).catch((error) => {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      
       // eslint-disable-next-line no-console
-      console.error("Failed to initiate AI generation:", error);
+      console.error("Failed to initiate AI generation:", {
+        generationId,
+        userId,
+        error: errorMessage,
+        errorStack: error instanceof Error ? error.stack : undefined,
+        timestamp: new Date().toISOString(),
+      });
+      
       // Error is logged but doesn't affect the response
       // The generation record is already created
+      // The error will be recorded in ai_logs by the service itself
     });
 
-    // Step 8: Return 202 Accepted response
+    // Step 10: Return 202 Accepted response
     const response: AIGenerationResponseDTO = {
       message: "AI generation initiated",
       generation_id: generationId,

@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "../../db/supabase.client";
 import { createOpenRouterService } from "./openrouterService";
-import type { ResponseFormat } from "./openrouter.types";
+import type { ResponseFormat, ParsedResponse } from "./openrouter.types";
 
 /**
  * Type definition for a generated flashcard from AI response
@@ -114,8 +114,24 @@ export async function initiateAIGeneration(
   const startTime = new Date();
 
   try {
-    // Initialize OpenRouter service
-    const openRouterService = createOpenRouterService();
+    // Initialize OpenRouter service with error handling
+    let openRouterService;
+    try {
+      openRouterService = createOpenRouterService();
+    } catch (serviceError) {
+      const configError = serviceError instanceof Error 
+        ? serviceError.message 
+        : "Failed to initialize OpenRouter service";
+      
+      // eslint-disable-next-line no-console
+      console.error("OpenRouter service initialization failed:", {
+        generationId,
+        error: configError,
+        timestamp: new Date().toISOString(),
+      });
+      
+      throw new Error(`Configuration error: ${configError}`);
+    }
 
     // Prepare user message
     const userMessage = `Please analyze the following text and generate educational flashcards:
@@ -124,34 +140,102 @@ ${inputText}
 
 Generate flashcards that will help someone learn and remember the key information from this text.`;
 
-    // Call OpenRouter API with flashcard generation configuration
-    const response = await openRouterService.sendChat(FLASHCARDS_GENERATION_SYSTEM_PROMPT, userMessage, {
-      responseFormat: FLASHCARDS_RESPONSE_SCHEMA,
-      modelParams: {
-        temperature: 0.7,
-        max_tokens: 2000,
-      },
-    });
+    // Call OpenRouter API with flashcard generation configuration and timeout
+    let response: ParsedResponse;
+    try {
+      // Add timeout wrapper for API call (45 seconds to stay under 30-40s requirement)
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error("AI generation timeout - request took longer than 45 seconds")), 45000);
+      });
 
-    // Parse AI response
-    const parsedContent = parseAIResponse(response.content);
+      const apiPromise = openRouterService.sendChat(FLASHCARDS_GENERATION_SYSTEM_PROMPT, userMessage, {
+        responseFormat: FLASHCARDS_RESPONSE_SCHEMA,
+        modelParams: {
+          temperature: 0.7,
+          max_tokens: 2000,
+        },
+      });
+
+      response = await Promise.race([apiPromise, timeoutPromise]);
+    } catch (apiError) {
+      const errorMessage = apiError instanceof Error ? apiError.message : "Unknown API error";
+      
+      // eslint-disable-next-line no-console
+      console.error("OpenRouter API call failed:", {
+        generationId,
+        error: errorMessage,
+        timestamp: new Date().toISOString(),
+      });
+
+      // Categorize error types for better error messages
+      if (errorMessage.includes("timeout") || errorMessage.includes("ETIMEDOUT")) {
+        throw new Error("AI service timeout - please try again with shorter text");
+      } else if (errorMessage.includes("rate limit") || errorMessage.includes("429")) {
+        throw new Error("AI service rate limit exceeded - please try again in a few moments");
+      } else if (errorMessage.includes("unauthorized") || errorMessage.includes("401")) {
+        throw new Error("AI service authentication failed - please contact support");
+      } else if (errorMessage.includes("network") || errorMessage.includes("ECONNREFUSED")) {
+        throw new Error("AI service unavailable - please try again later");
+      } else {
+        throw new Error(`AI service error: ${errorMessage}`);
+      }
+    }
+
+    // Parse AI response with error handling
+    let parsedContent;
+    try {
+      parsedContent = parseAIResponse(response.content);
+    } catch (parseError) {
+      const errorMessage = parseError instanceof Error ? parseError.message : "Failed to parse AI response";
+      
+      // eslint-disable-next-line no-console
+      console.error("AI response parsing failed:", {
+        generationId,
+        error: errorMessage,
+        responseContent: response.content?.substring(0, 200), // Log first 200 chars for debugging
+        timestamp: new Date().toISOString(),
+      });
+      
+      throw new Error(`Invalid AI response format: ${errorMessage}`);
+    }
 
     // Validate flashcards
     if (!parsedContent.flashcards || parsedContent.flashcards.length === 0) {
-      throw new Error("AI generated no flashcards");
+      throw new Error("AI generated no flashcards - the input text might not contain sufficient content for flashcard generation");
     }
 
     // Calculate response time
     const endTime = new Date();
     const responseTime = endTime.toISOString();
 
-    // Process the response and create flashcard proposals
-    await processAIResponse(supabase, generationId, userId, parsedContent.flashcards, {
-      tokenCount: response.usage?.total_tokens || 0,
-      model: response.model || "unknown",
-      responseTime: responseTime,
-      requestTime: startTime.toISOString(),
-    });
+    // Process the response and create flashcard proposals with error handling
+    try {
+      await processAIResponse(supabase, generationId, userId, parsedContent.flashcards, {
+        tokenCount: response.usage?.total_tokens || 0,
+        model: response.model || "unknown",
+        responseTime: responseTime,
+        requestTime: startTime.toISOString(),
+      });
+    } catch (dbError) {
+      const errorMessage = dbError instanceof Error ? dbError.message : "Database operation failed";
+      
+      // eslint-disable-next-line no-console
+      console.error("Database operation failed while processing AI response:", {
+        generationId,
+        error: errorMessage,
+        flashcardsCount: parsedContent.flashcards.length,
+        timestamp: new Date().toISOString(),
+      });
+      
+      // Check for specific database errors
+      if (errorMessage.includes("connection") || errorMessage.includes("timeout")) {
+        throw new Error("Database connection error - please try again");
+      } else if (errorMessage.includes("permission") || errorMessage.includes("policy")) {
+        throw new Error("Database permission error - please contact support");
+      } else {
+        throw new Error(`Failed to save flashcards: ${errorMessage}`);
+      }
+    }
 
     // eslint-disable-next-line no-console
     console.log("AI Generation completed successfully:", {
@@ -168,6 +252,7 @@ Generate flashcards that will help someone learn and remember the key informatio
     console.error("AI Generation failed:", {
       generationId,
       error: errorMessage,
+      errorStack: error instanceof Error ? error.stack : undefined,
       timestamp: new Date().toISOString(),
     });
 
@@ -240,7 +325,18 @@ async function processAIResponse(
     const { error: flashcardsError } = await supabase.from("flashcards").insert(flashcardInserts);
 
     if (flashcardsError) {
-      throw new Error(`Failed to create flashcard proposals: ${flashcardsError.message}`);
+      // eslint-disable-next-line no-console
+      console.error("Failed to insert flashcards:", {
+        generationId,
+        userId,
+        flashcardsCount: flashcards.length,
+        error: flashcardsError,
+        errorCode: flashcardsError.code,
+        errorDetails: flashcardsError.details,
+        errorHint: flashcardsError.hint,
+      });
+      
+      throw new Error(`Failed to create flashcard proposals: ${flashcardsError.message} (code: ${flashcardsError.code})`);
     }
 
     // Update flashcards_ai_generation record with metadata
@@ -255,7 +351,15 @@ async function processAIResponse(
       .eq("id", generationId);
 
     if (generationError) {
-      throw new Error(`Failed to update generation record: ${generationError.message}`);
+      // eslint-disable-next-line no-console
+      console.error("Failed to update generation record:", {
+        generationId,
+        error: generationError,
+        errorCode: generationError.code,
+        errorDetails: generationError.details,
+      });
+      
+      throw new Error(`Failed to update generation record: ${generationError.message} (code: ${generationError.code})`);
     }
 
     // Update ai_logs record with timing and token information
@@ -268,7 +372,15 @@ async function processAIResponse(
       .eq("flashcards_generation_id", generationId);
 
     if (logError) {
-      throw new Error(`Failed to update ai_logs: ${logError.message}`);
+      // eslint-disable-next-line no-console
+      console.error("Failed to update ai_logs:", {
+        generationId,
+        error: logError,
+        errorCode: logError.code,
+        errorDetails: logError.details,
+      });
+      
+      throw new Error(`Failed to update ai_logs: ${logError.message} (code: ${logError.code})`);
     }
 
     // eslint-disable-next-line no-console
@@ -278,11 +390,15 @@ async function processAIResponse(
       tokenCount: metadata.tokenCount,
     });
   } catch (error) {
-    // Log error for debugging
+    // Log error for debugging with full context
     // eslint-disable-next-line no-console
     console.error("Failed to process AI response:", {
       generationId,
+      userId,
+      flashcardsCount: flashcards.length,
       error: error instanceof Error ? error.message : "Unknown error",
+      errorStack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString(),
     });
 
     throw error;
@@ -334,16 +450,45 @@ async function updateGenerationError(
   errorMessage: string
 ): Promise<void> {
   try {
+    // Truncate error message if too long to fit in database
+    const truncatedError = errorMessage.length > 1000 
+      ? errorMessage.substring(0, 997) + "..." 
+      : errorMessage;
+
     // Update ai_logs with error information
-    await supabase
+    const { error: updateError } = await supabase
       .from("ai_logs")
       .update({
-        error_info: errorMessage,
+        error_info: truncatedError,
         response_time: new Date().toISOString(),
       })
       .eq("flashcards_generation_id", generationId);
+
+    if (updateError) {
+      // eslint-disable-next-line no-console
+      console.error("Failed to update error in ai_logs:", {
+        generationId,
+        updateError,
+        errorCode: updateError.code,
+        errorDetails: updateError.details,
+        originalError: truncatedError,
+      });
+    } else {
+      // eslint-disable-next-line no-console
+      console.log("Error logged to ai_logs:", {
+        generationId,
+        errorMessage: truncatedError,
+      });
+    }
   } catch (error) {
+    // Last resort error logging - if we can't update the database, at least log to console
     // eslint-disable-next-line no-console
-    console.error("Failed to update error in ai_logs:", error);
+    console.error("Critical: Failed to update error in ai_logs (exception caught):", {
+      generationId,
+      error: error instanceof Error ? error.message : "Unknown error",
+      errorStack: error instanceof Error ? error.stack : undefined,
+      originalError: errorMessage,
+      timestamp: new Date().toISOString(),
+    });
   }
 }

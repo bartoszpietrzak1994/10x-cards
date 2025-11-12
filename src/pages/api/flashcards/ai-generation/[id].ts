@@ -68,7 +68,16 @@ export const GET: APIRoute = async ({ params, locals }) => {
       }
 
       // eslint-disable-next-line no-console
-      console.error("Error fetching generation metadata:", generationError);
+      console.error("Error fetching generation metadata:", {
+        generationId,
+        userId: locals.user.id,
+        error: generationError,
+        errorCode: generationError.code,
+        errorMessage: generationError.message,
+        errorDetails: generationError.details,
+        errorHint: generationError.hint,
+        timestamp: new Date().toISOString(),
+      });
       throw generationError;
     }
 
@@ -82,7 +91,15 @@ export const GET: APIRoute = async ({ params, locals }) => {
     if (logError && logError.code !== "PGRST116") {
       // Log error but don't fail the request
       // eslint-disable-next-line no-console
-      console.error("Error fetching AI log:", logError);
+      console.error("Error fetching AI log:", {
+        generationId,
+        userId: locals.user.id,
+        error: logError,
+        errorCode: logError.code,
+        errorMessage: logError.message,
+        errorDetails: logError.details,
+        timestamp: new Date().toISOString(),
+      });
     }
 
     // Step 5: Fetch proposals
@@ -95,7 +112,16 @@ export const GET: APIRoute = async ({ params, locals }) => {
 
     if (proposalsError) {
       // eslint-disable-next-line no-console
-      console.error("Error fetching proposals:", proposalsError);
+      console.error("Error fetching proposals:", {
+        generationId,
+        userId: locals.user.id,
+        error: proposalsError,
+        errorCode: proposalsError.code,
+        errorMessage: proposalsError.message,
+        errorDetails: proposalsError.details,
+        errorHint: proposalsError.hint,
+        timestamp: new Date().toISOString(),
+      });
       throw proposalsError;
     }
 
@@ -121,8 +147,17 @@ export const GET: APIRoute = async ({ params, locals }) => {
       }
     );
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    const generationId = parseInt(params.id || "", 10);
+    
     // eslint-disable-next-line no-console
-    console.error("Unexpected error in AI generation GET endpoint:", error);
+    console.error("Unexpected error in AI generation GET endpoint:", {
+      generationId: isNaN(generationId) ? params.id : generationId,
+      userId: locals.user?.id,
+      error: errorMessage,
+      errorStack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString(),
+    });
 
     return new Response(
       JSON.stringify({
