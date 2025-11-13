@@ -81,10 +81,22 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     // Step 4: Validate service client availability before processing
     if (!supabaseServiceClient) {
+      // eslint-disable-next-line no-console
+      console.error("Service client validation failed:", {
+        supabaseServiceClientExists: !!supabaseServiceClient,
+        envVarExists: !!import.meta.env.SUPABASE_SERVICE_ROLE_KEY,
+        envVarValue: import.meta.env.SUPABASE_SERVICE_ROLE_KEY ? "SET" : "NOT_SET",
+        timestamp: new Date().toISOString(),
+      });
+      
       return new Response(
         JSON.stringify({
           error: "Service unavailable",
           message: "AI generation service is not properly configured. Please contact support.",
+          debug: {
+            reason: "SUPABASE_SERVICE_ROLE_KEY not configured",
+            supabaseServiceClient: "null",
+          }
         }),
         {
           status: 503,
@@ -101,11 +113,21 @@ export const POST: APIRoute = async ({ request, locals }) => {
       }
     } catch (configError) {
       // eslint-disable-next-line no-console
-      console.error("Configuration error:", configError);
+      console.error("OpenRouter API key validation failed:", {
+        envVarExists: !!import.meta.env.OPENROUTER_API_KEY,
+        envVarValue: import.meta.env.OPENROUTER_API_KEY ? "SET" : "NOT_SET",
+        error: configError instanceof Error ? configError.message : "Unknown error",
+        timestamp: new Date().toISOString(),
+      });
+      
       return new Response(
         JSON.stringify({
           error: "Service unavailable",
           message: "AI generation service is not properly configured. Please contact support.",
+          debug: {
+            reason: "OPENROUTER_API_KEY not configured",
+            error: configError instanceof Error ? configError.message : "Unknown error",
+          }
         }),
         {
           status: 503,
