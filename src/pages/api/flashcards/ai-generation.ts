@@ -2,8 +2,16 @@ import type { APIRoute } from "astro";
 import { z } from "zod";
 
 import { initiateAIGeneration } from "../../../lib/services/aiGenerationService";
-import { supabaseServiceClient } from "../../../db/supabase.client";
+import { createServiceClient } from "../../../db/supabase.client";
 import type { AIGenerationResponseDTO } from "../../../types";
+
+/**
+ * Cloudflare Pages runtime environment interface
+ */
+interface CloudflareEnv {
+  SUPABASE_SERVICE_ROLE_KEY?: string;
+  OPENROUTER_API_KEY?: string;
+}
 
 // Zod schema for input validation
 const initiateAIGenerationSchema = z.object({
@@ -86,13 +94,23 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     const userId = locals.user.id;
 
-    // Step 4: Comprehensive environment check with detailed diagnostics
+    // Step 4: Access environment variables from Cloudflare runtime context
+    // In Cloudflare Pages, non-PUBLIC env vars must be accessed via runtime.env
+    // @ts-ignore - Cloudflare-specific runtime property
+    const env = (locals.runtime?.env as CloudflareEnv) || {};
+    
+    // Try runtime context first, fallback to import.meta.env (for local dev)
+    const supabaseServiceRoleKey = env.SUPABASE_SERVICE_ROLE_KEY || import.meta.env.SUPABASE_SERVICE_ROLE_KEY;
+    const openrouterApiKey = env.OPENROUTER_API_KEY || import.meta.env.OPENROUTER_API_KEY;
+
+    // Step 5: Comprehensive environment check with detailed diagnostics
     const envDiagnostics = {
-      supabaseServiceClient: !!supabaseServiceClient,
-      supabaseServiceRoleKey: !!import.meta.env.SUPABASE_SERVICE_ROLE_KEY,
-      supabaseServiceRoleKeyLength: import.meta.env.SUPABASE_SERVICE_ROLE_KEY?.length || 0,
-      openrouterApiKey: !!import.meta.env.OPENROUTER_API_KEY,
-      openrouterApiKeyLength: import.meta.env.OPENROUTER_API_KEY?.length || 0,
+      hasRuntimeContext: !!locals.runtime,
+      hasRuntimeEnv: !!env,
+      supabaseServiceRoleKey: !!supabaseServiceRoleKey,
+      supabaseServiceRoleKeyLength: supabaseServiceRoleKey?.length || 0,
+      openrouterApiKey: !!openrouterApiKey,
+      openrouterApiKeyLength: openrouterApiKey?.length || 0,
       publicSupabaseUrl: !!import.meta.env.PUBLIC_SUPABASE_URL,
       publicSupabaseAnonKey: !!import.meta.env.PUBLIC_SUPABASE_ANON_KEY,
       timestamp: new Date().toISOString(),
@@ -100,13 +118,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     // Add diagnostics to headers for easy debugging
     Object.assign(debugHeaders, {
-      "X-Debug-Service-Client": envDiagnostics.supabaseServiceClient.toString(),
+      "X-Debug-Runtime": envDiagnostics.hasRuntimeContext.toString(),
       "X-Debug-Service-Key": envDiagnostics.supabaseServiceRoleKey.toString(),
       "X-Debug-OpenRouter-Key": envDiagnostics.openrouterApiKey.toString(),
     });
 
-    // Step 5: Validate service client availability
-    if (!supabaseServiceClient) {
+    // Step 6: Validate service role key availability
+    if (!supabaseServiceRoleKey) {
       return new Response(
         JSON.stringify({
           error: "Service unavailable",
@@ -124,9 +142,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    // Step 6: Validate OpenRouter configuration
-    const openRouterApiKey = import.meta.env.OPENROUTER_API_KEY;
-    if (!openRouterApiKey) {
+    // Step 7: Validate OpenRouter configuration
+    if (!openrouterApiKey) {
       return new Response(
         JSON.stringify({
           error: "Service unavailable",
@@ -144,7 +161,29 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    // Step 6: Generate SHA-256 hash of input text (Web Crypto API - Cloudflare compatible)
+    // Step 8: Create service client with runtime environment variable
+    let serviceClient;
+    try {
+      serviceClient = createServiceClient(supabaseServiceRoleKey);
+    } catch (clientError) {
+      return new Response(
+        JSON.stringify({
+          error: "Service unavailable",
+          message: "Failed to initialize service client.",
+          debug: {
+            reason: "Service client initialization failed",
+            error: clientError instanceof Error ? clientError.message : "Unknown error",
+            diagnostics: envDiagnostics,
+          }
+        }),
+        {
+          status: 503,
+          headers: debugHeaders,
+        }
+      );
+    }
+
+    // Step 9: Generate SHA-256 hash of input text (Web Crypto API - Cloudflare compatible)
     const encoder = new TextEncoder();
     const data = encoder.encode(input_text);
     const hashBuffer = await crypto.subtle.digest("SHA-256", data);
@@ -154,7 +193,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const inputLength = input_text.length;
     const requestTime = new Date().toISOString();
 
-    // Step 7: Insert record into flashcards_ai_generation table
+    // Step 10: Insert record into flashcards_ai_generation table
     const { data: generationData, error: generationError } = await supabase
       .from("flashcards_ai_generation")
       .insert({
@@ -181,7 +220,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     const generationId = generationData.id;
 
-    // Step 8: Insert record into ai_logs table
+    // Step 11: Insert record into ai_logs table
     const { error: logError } = await supabase.from("ai_logs").insert({
       flashcards_generation_id: generationId,
       request_time: requestTime,
@@ -195,11 +234,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
       // Continue despite log error - generation record is created
     }
 
-    // Step 9: Trigger asynchronous AI processing
+    // Step 12: Trigger asynchronous AI processing
     // Note: This is fire-and-forget - we don't await the result
     // In production, this would queue a background job
     // Use service client to bypass RLS for background operations
-    initiateAIGeneration(supabaseServiceClient, generationId, input_text, userId).catch((error) => {
+    initiateAIGeneration(serviceClient, generationId, input_text, userId).catch((error) => {
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
       
       // eslint-disable-next-line no-console
@@ -216,7 +255,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       // The error will be recorded in ai_logs by the service itself
     });
 
-    // Step 10: Return 202 Accepted response
+    // Step 13: Return 202 Accepted response
     const response: AIGenerationResponseDTO = {
       message: "AI generation initiated",
       generation_id: generationId,

@@ -8,6 +8,12 @@ declare global {
     interface Locals {
       supabase: SupabaseClient;
       user: UserDTO | null;
+      // Cloudflare Pages runtime context
+      runtime?: {
+        env?: Record<string, string | undefined>;
+        cf?: Record<string, unknown>;
+        ctx?: Record<string, unknown>;
+      };
     }
   }
 }
