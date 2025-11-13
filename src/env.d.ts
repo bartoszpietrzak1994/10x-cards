@@ -12,7 +12,10 @@ declare global {
       runtime?: {
         env?: Record<string, string | undefined>;
         cf?: Record<string, unknown>;
-        ctx?: Record<string, unknown>;
+        ctx?: {
+          waitUntil?: (promise: Promise<unknown>) => void;
+          passThroughOnException?: () => void;
+        };
       };
     }
   }

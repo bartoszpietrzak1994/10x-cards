@@ -39,6 +39,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
     "X-Debug-User-Id": locals.user?.id || "NOT_AUTHENTICATED",
   };
 
+  // Get Cloudflare context for waitUntil (keeps worker alive for background jobs)
+  // @ts-ignore - Cloudflare-specific
+  const cfContext = locals.runtime?.ctx;
+
   try {
     // Step 1: Parse and validate request body
     let body: unknown;
@@ -235,11 +239,15 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     // Step 12: Trigger asynchronous AI processing
-    // Note: This is fire-and-forget - we don't await the result
-    // In production, this would queue a background job
-    // Use service client to bypass RLS for background operations
-    // Pass runtime API key for Cloudflare Workers compatibility
-    initiateAIGeneration(serviceClient, generationId, input_text, userId, openrouterApiKey).catch((error) => {
+    // Note: In Cloudflare Workers, we use waitUntil to keep the worker alive
+    // for background operations. Without it, the worker terminates after the response.
+    const backgroundJob = initiateAIGeneration(
+      serviceClient, 
+      generationId, 
+      input_text, 
+      userId, 
+      openrouterApiKey
+    ).catch((error) => {
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
       
       // eslint-disable-next-line no-console
@@ -255,6 +263,17 @@ export const POST: APIRoute = async ({ request, locals }) => {
       // The generation record is already created
       // The error will be recorded in ai_logs by the service itself
     });
+
+    // Keep the worker alive for background processing (Cloudflare Workers requirement)
+    if (cfContext?.waitUntil) {
+      cfContext.waitUntil(backgroundJob);
+      Object.assign(debugHeaders, { "X-Debug-WaitUntil": "true" });
+    } else {
+      // Local development fallback - just continue with fire-and-forget
+      // eslint-disable-next-line no-console
+      console.warn("waitUntil not available - background job may not complete in production");
+      Object.assign(debugHeaders, { "X-Debug-WaitUntil": "false" });
+    }
 
     // Step 13: Return 202 Accepted response
     const response: AIGenerationResponseDTO = {
