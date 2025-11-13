@@ -32,13 +32,6 @@ export const prerender = false;
  * @throws 500 Internal Server Error for unexpected errors
  */
 export const POST: APIRoute = async ({ request, locals }) => {
-  // Add debug headers to ALL responses for visibility
-  const debugHeaders = {
-    "Content-Type": "application/json",
-    "X-Debug-Timestamp": new Date().toISOString(),
-    "X-Debug-User-Id": locals.user?.id || "NOT_AUTHENTICATED",
-  };
-
   // Get Cloudflare context for waitUntil (keeps worker alive for background jobs)
   // @ts-ignore - Cloudflare-specific
   const cfContext = locals.runtime?.ctx;
@@ -107,65 +100,35 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const supabaseServiceRoleKey = env.SUPABASE_SERVICE_ROLE_KEY || import.meta.env.SUPABASE_SERVICE_ROLE_KEY;
     const openrouterApiKey = env.OPENROUTER_API_KEY || import.meta.env.OPENROUTER_API_KEY;
 
-    // Step 5: Comprehensive environment check with detailed diagnostics
-    const envDiagnostics = {
-      hasRuntimeContext: !!locals.runtime,
-      hasRuntimeEnv: !!env,
-      supabaseServiceRoleKey: !!supabaseServiceRoleKey,
-      supabaseServiceRoleKeyLength: supabaseServiceRoleKey?.length || 0,
-      openrouterApiKey: !!openrouterApiKey,
-      openrouterApiKeyLength: openrouterApiKey?.length || 0,
-      publicSupabaseUrl: !!import.meta.env.PUBLIC_SUPABASE_URL,
-      publicSupabaseAnonKey: !!import.meta.env.PUBLIC_SUPABASE_ANON_KEY,
-      timestamp: new Date().toISOString(),
-    };
-
-    // Add diagnostics to headers for easy debugging
-    Object.assign(debugHeaders, {
-      "X-Debug-Runtime": envDiagnostics.hasRuntimeContext.toString(),
-      "X-Debug-Service-Key": envDiagnostics.supabaseServiceRoleKey.toString(),
-      "X-Debug-OpenRouter-Key": envDiagnostics.openrouterApiKey.toString(),
-    });
-
-    // Step 6: Validate service role key availability
+    // Step 5: Validate service role key availability
     if (!supabaseServiceRoleKey) {
       return new Response(
         JSON.stringify({
           error: "Service unavailable",
           message: "AI generation service is not properly configured. Please contact support.",
-          debug: {
-            reason: "SUPABASE_SERVICE_ROLE_KEY not configured or invalid",
-            diagnostics: envDiagnostics,
-            hint: "Check Cloudflare Pages environment variables in Production settings",
-          }
         }),
         {
           status: 503,
-          headers: debugHeaders,
+          headers: { "Content-Type": "application/json" },
         }
       );
     }
 
-    // Step 7: Validate OpenRouter configuration
+    // Step 6: Validate OpenRouter configuration
     if (!openrouterApiKey) {
       return new Response(
         JSON.stringify({
           error: "Service unavailable",
           message: "AI generation service is not properly configured. Please contact support.",
-          debug: {
-            reason: "OPENROUTER_API_KEY not configured or invalid",
-            diagnostics: envDiagnostics,
-            hint: "Check Cloudflare Pages environment variables in Production settings",
-          }
         }),
         {
           status: 503,
-          headers: debugHeaders,
+          headers: { "Content-Type": "application/json" },
         }
       );
     }
 
-    // Step 8: Create service client with runtime environment variable
+    // Step 7: Create service client with runtime environment variable
     let serviceClient;
     try {
       serviceClient = createServiceClient(supabaseServiceRoleKey);
@@ -174,20 +137,15 @@ export const POST: APIRoute = async ({ request, locals }) => {
         JSON.stringify({
           error: "Service unavailable",
           message: "Failed to initialize service client.",
-          debug: {
-            reason: "Service client initialization failed",
-            error: clientError instanceof Error ? clientError.message : "Unknown error",
-            diagnostics: envDiagnostics,
-          }
         }),
         {
           status: 503,
-          headers: debugHeaders,
+          headers: { "Content-Type": "application/json" },
         }
       );
     }
 
-    // Step 9: Generate SHA-256 hash of input text (Web Crypto API - Cloudflare compatible)
+    // Step 8: Generate SHA-256 hash of input text (Web Crypto API - Cloudflare compatible)
     const encoder = new TextEncoder();
     const data = encoder.encode(input_text);
     const hashBuffer = await crypto.subtle.digest("SHA-256", data);
@@ -197,7 +155,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const inputLength = input_text.length;
     const requestTime = new Date().toISOString();
 
-    // Step 10: Insert record into flashcards_ai_generation table
+    // Step 9: Insert record into flashcards_ai_generation table
     const { data: generationData, error: generationError } = await supabase
       .from("flashcards_ai_generation")
       .insert({
@@ -224,7 +182,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     const generationId = generationData.id;
 
-    // Step 11: Insert record into ai_logs table
+    // Step 10: Insert record into ai_logs table
     const { error: logError } = await supabase.from("ai_logs").insert({
       flashcards_generation_id: generationId,
       request_time: requestTime,
@@ -238,7 +196,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       // Continue despite log error - generation record is created
     }
 
-    // Step 12: Trigger asynchronous AI processing
+    // Step 11: Trigger asynchronous AI processing
     // Note: In Cloudflare Workers, we use waitUntil to keep the worker alive
     // for background operations. Without it, the worker terminates after the response.
     const backgroundJob = initiateAIGeneration(
@@ -267,15 +225,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
     // Keep the worker alive for background processing (Cloudflare Workers requirement)
     if (cfContext?.waitUntil) {
       cfContext.waitUntil(backgroundJob);
-      Object.assign(debugHeaders, { "X-Debug-WaitUntil": "true" });
-    } else {
-      // Local development fallback - just continue with fire-and-forget
-      // eslint-disable-next-line no-console
-      console.warn("waitUntil not available - background job may not complete in production");
-      Object.assign(debugHeaders, { "X-Debug-WaitUntil": "false" });
     }
 
-    // Step 13: Return 202 Accepted response
+    // Step 12: Return 202 Accepted response
     const response: AIGenerationResponseDTO = {
       message: "AI generation initiated",
       generation_id: generationId,
@@ -284,7 +236,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     return new Response(JSON.stringify(response), {
       status: 202,
-      headers: debugHeaders,
+      headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
     // Global error handler

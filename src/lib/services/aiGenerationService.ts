@@ -125,15 +125,6 @@ export async function initiateAIGeneration(
         ? serviceError.message 
         : "Failed to initialize OpenRouter service";
       
-      // eslint-disable-next-line no-console
-      console.error("OpenRouter service initialization failed:", {
-        generationId,
-        error: configError,
-        hasApiKey: !!openRouterApiKey,
-        apiKeyLength: openRouterApiKey?.length || 0,
-        timestamp: new Date().toISOString(),
-      });
-      
       throw new Error(`Configuration error: ${configError}`);
     }
 
