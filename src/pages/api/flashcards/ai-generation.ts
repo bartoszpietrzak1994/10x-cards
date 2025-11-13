@@ -238,7 +238,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
     // Note: This is fire-and-forget - we don't await the result
     // In production, this would queue a background job
     // Use service client to bypass RLS for background operations
-    initiateAIGeneration(serviceClient, generationId, input_text, userId).catch((error) => {
+    // Pass runtime API key for Cloudflare Workers compatibility
+    initiateAIGeneration(serviceClient, generationId, input_text, userId, openrouterApiKey).catch((error) => {
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
       
       // eslint-disable-next-line no-console

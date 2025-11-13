@@ -427,12 +427,15 @@ export class OpenRouterService {
 /**
  * Creates an OpenRouter service instance with environment variables
  *
+ * @param runtimeApiKey - Optional API key from runtime context (Cloudflare Workers)
  * @returns Configured OpenRouter service instance
  * @throws Error if required environment variables are missing
  */
-export function createOpenRouterService(): OpenRouterService {
+export function createOpenRouterService(runtimeApiKey?: string): OpenRouterService {
   const apiEndpoint = import.meta.env.OPENROUTER_API_ENDPOINT || "https://openrouter.ai/api/v1/chat/completions";
-  const apiKey = import.meta.env.OPENROUTER_API_KEY;
+  
+  // Try runtime parameter first, then fall back to import.meta.env (local dev)
+  const apiKey = runtimeApiKey || import.meta.env.OPENROUTER_API_KEY;
   const defaultModelName = import.meta.env.OPENROUTER_DEFAULT_MODEL || "openai/gpt-4o-mini";
 
   if (!apiKey) {

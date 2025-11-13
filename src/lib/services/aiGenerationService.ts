@@ -94,13 +94,15 @@ Return your response as a JSON object with an array of flashcards.`;
  * @param generationId - ID of the generation record
  * @param inputText - The text to generate flashcards from (1000-10000 characters)
  * @param userId - User ID for creating flashcard proposals
+ * @param openRouterApiKey - OpenRouter API key from runtime context (required for Cloudflare Workers)
  * @throws Error if AI generation fails or response is invalid
  */
 export async function initiateAIGeneration(
   supabase: SupabaseClient,
   generationId: number,
   inputText: string,
-  userId: string
+  userId: string,
+  openRouterApiKey: string
 ): Promise<void> {
   // Validate input parameters
   if (!inputText || inputText.trim().length === 0) {
@@ -117,7 +119,7 @@ export async function initiateAIGeneration(
     // Initialize OpenRouter service with error handling
     let openRouterService;
     try {
-      openRouterService = createOpenRouterService();
+      openRouterService = createOpenRouterService(openRouterApiKey);
     } catch (serviceError) {
       const configError = serviceError instanceof Error 
         ? serviceError.message 
@@ -127,6 +129,8 @@ export async function initiateAIGeneration(
       console.error("OpenRouter service initialization failed:", {
         generationId,
         error: configError,
+        hasApiKey: !!openRouterApiKey,
+        apiKeyLength: openRouterApiKey?.length || 0,
         timestamp: new Date().toISOString(),
       });
       
