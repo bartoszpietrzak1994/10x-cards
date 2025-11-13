@@ -24,6 +24,13 @@ export const prerender = false;
  * @throws 500 Internal Server Error for unexpected errors
  */
 export const POST: APIRoute = async ({ request, locals }) => {
+  // Add debug headers to ALL responses for visibility
+  const debugHeaders = {
+    "Content-Type": "application/json",
+    "X-Debug-Timestamp": new Date().toISOString(),
+    "X-Debug-User-Id": locals.user?.id || "NOT_AUTHENTICATED",
+  };
+
   try {
     // Step 1: Parse and validate request body
     let body: unknown;
@@ -79,59 +86,60 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     const userId = locals.user.id;
 
-    // Step 4: Validate service client availability before processing
+    // Step 4: Comprehensive environment check with detailed diagnostics
+    const envDiagnostics = {
+      supabaseServiceClient: !!supabaseServiceClient,
+      supabaseServiceRoleKey: !!import.meta.env.SUPABASE_SERVICE_ROLE_KEY,
+      supabaseServiceRoleKeyLength: import.meta.env.SUPABASE_SERVICE_ROLE_KEY?.length || 0,
+      openrouterApiKey: !!import.meta.env.OPENROUTER_API_KEY,
+      openrouterApiKeyLength: import.meta.env.OPENROUTER_API_KEY?.length || 0,
+      publicSupabaseUrl: !!import.meta.env.PUBLIC_SUPABASE_URL,
+      publicSupabaseAnonKey: !!import.meta.env.PUBLIC_SUPABASE_ANON_KEY,
+      timestamp: new Date().toISOString(),
+    };
+
+    // Add diagnostics to headers for easy debugging
+    Object.assign(debugHeaders, {
+      "X-Debug-Service-Client": envDiagnostics.supabaseServiceClient.toString(),
+      "X-Debug-Service-Key": envDiagnostics.supabaseServiceRoleKey.toString(),
+      "X-Debug-OpenRouter-Key": envDiagnostics.openrouterApiKey.toString(),
+    });
+
+    // Step 5: Validate service client availability
     if (!supabaseServiceClient) {
-      // eslint-disable-next-line no-console
-      console.error("Service client validation failed:", {
-        supabaseServiceClientExists: !!supabaseServiceClient,
-        envVarExists: !!import.meta.env.SUPABASE_SERVICE_ROLE_KEY,
-        envVarValue: import.meta.env.SUPABASE_SERVICE_ROLE_KEY ? "SET" : "NOT_SET",
-        timestamp: new Date().toISOString(),
-      });
-      
       return new Response(
         JSON.stringify({
           error: "Service unavailable",
           message: "AI generation service is not properly configured. Please contact support.",
           debug: {
-            reason: "SUPABASE_SERVICE_ROLE_KEY not configured",
-            supabaseServiceClient: "null",
+            reason: "SUPABASE_SERVICE_ROLE_KEY not configured or invalid",
+            diagnostics: envDiagnostics,
+            hint: "Check Cloudflare Pages environment variables in Production settings",
           }
         }),
         {
           status: 503,
-          headers: { "Content-Type": "application/json" },
+          headers: debugHeaders,
         }
       );
     }
 
-    // Step 5: Validate OpenRouter configuration
-    try {
-      const openRouterApiKey = import.meta.env.OPENROUTER_API_KEY;
-      if (!openRouterApiKey) {
-        throw new Error("OPENROUTER_API_KEY not configured");
-      }
-    } catch (configError) {
-      // eslint-disable-next-line no-console
-      console.error("OpenRouter API key validation failed:", {
-        envVarExists: !!import.meta.env.OPENROUTER_API_KEY,
-        envVarValue: import.meta.env.OPENROUTER_API_KEY ? "SET" : "NOT_SET",
-        error: configError instanceof Error ? configError.message : "Unknown error",
-        timestamp: new Date().toISOString(),
-      });
-      
+    // Step 6: Validate OpenRouter configuration
+    const openRouterApiKey = import.meta.env.OPENROUTER_API_KEY;
+    if (!openRouterApiKey) {
       return new Response(
         JSON.stringify({
           error: "Service unavailable",
           message: "AI generation service is not properly configured. Please contact support.",
           debug: {
-            reason: "OPENROUTER_API_KEY not configured",
-            error: configError instanceof Error ? configError.message : "Unknown error",
+            reason: "OPENROUTER_API_KEY not configured or invalid",
+            diagnostics: envDiagnostics,
+            hint: "Check Cloudflare Pages environment variables in Production settings",
           }
         }),
         {
           status: 503,
-          headers: { "Content-Type": "application/json" },
+          headers: debugHeaders,
         }
       );
     }
@@ -217,7 +225,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     return new Response(JSON.stringify(response), {
       status: 202,
-      headers: { "Content-Type": "application/json" },
+      headers: debugHeaders,
     });
   } catch (error) {
     // Global error handler
